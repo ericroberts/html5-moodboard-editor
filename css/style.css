@@ -49,6 +49,8 @@ textarea{overflow:auto;vertical-align:top;resize:vertical;}
 input:invalid,textarea:invalid{background-color:#f0dddd;}
 table{border-collapse:collapse;border-spacing:0;}
 td{vertical-align:top;}
+html,body{height:100%;}
+#canvas{height:100%;overflow:auto;}
 .ir{display:block;border:0;text-indent:-999em;overflow:hidden;background-color:transparent;background-repeat:no-repeat;text-align:left;direction:ltr;}
 .ir br{display:none;}
 .hidden{display:none !important;visibility:hidden;}
