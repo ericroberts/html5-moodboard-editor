@@ -9,7 +9,6 @@ $(function() {
       var baseX = $(window).width()/2;
       var baseY = $(window).height()/2;
       
-      
       // Create image and set styles using image data
       var obj = document.createElement('img');
       obj.setAttribute('src', 'http://items.olioboard.com.s3.amazonaws.com/' + object.id + '_400x400.jpg');
