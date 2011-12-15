@@ -49,10 +49,9 @@ textarea{overflow:auto;vertical-align:top;resize:vertical;}
 input:invalid,textarea:invalid{background-color:#f0dddd;}
 table{border-collapse:collapse;border-spacing:0;}
 td{vertical-align:top;}
-html,body{height:100%;}
+html,body{height:100%;background:#ccc;}
 #canvas{height:100%;overflow:auto;}
-.object{width:1px;height:1px;position:absolute;}.object.active{opacity:0.5;}
-.object img{position:absolute;}
+canvas{position:absolute;}canvas.active{opacity:0.5;}
 .ir{display:block;border:0;text-indent:-999em;overflow:hidden;background-color:transparent;background-repeat:no-repeat;text-align:left;direction:ltr;}
 .ir br{display:none;}
 .hidden{display:none !important;visibility:hidden;}
