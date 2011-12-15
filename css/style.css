@@ -51,6 +51,8 @@ table{border-collapse:collapse;border-spacing:0;}
 td{vertical-align:top;}
 html,body{height:100%;}
 #canvas{height:100%;overflow:auto;}
+.object{width:1px;height:1px;position:absolute;}.object.active{opacity:0.5;}
+.object img{position:absolute;}
 .ir{display:block;border:0;text-indent:-999em;overflow:hidden;background-color:transparent;background-repeat:no-repeat;text-align:left;direction:ltr;}
 .ir br{display:none;}
 .hidden{display:none !important;visibility:hidden;}
