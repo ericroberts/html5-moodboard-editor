@@ -13,6 +13,28 @@ $(function() {
     });
   },"json");
   
+  $("#removebg").live("change", function() {
+    
+    var id = $(this).data("id"),
+        canvas = document.getElementById('item_'+id),
+        ctx = canvas.getContext('2d'),
+        img = new Image(),
+        object = $(canvas).data('object');
+        
+    img.src = '/images/items/'+id+'_400x400.jpg';
+    
+    if($(this).is(":checked")) {
+      editor.removeColour(null,ctx,img);
+      object.media.removed = "true";
+    } else {
+      img.onload = function() { ctx.drawImage(img, 0, 0, img.width, img.height); }
+      object.media.removed = null;
+    }
+    
+    $(canvas).data('object',object);
+    
+  });
+  
 });
 
 $(window).resize(function() {
@@ -23,6 +45,18 @@ $(window).resize(function() {
 });
 
 var editor = {
+  removeColour: function(object,ctx,img,colour) {
+    var imageData = ctx.getImageData(0,0,img.width,img.height);
+    var pixel = imageData.data;
+    var r = 0, g = 1, b = 2, a = 3;
+    
+    for(var p = 0; p < pixel.length; p+=4) {
+      if((pixel[p+r] >= 250 && pixel[p+r] <= 255) && (pixel[p+g] >= 250 && pixel[p+g] <= 255) && (pixel[p+b] >= 250 && pixel[p+b] <= 255)) {
+        pixel[p+a] = 0;
+      }
+    }
+    ctx.putImageData(imageData,0,0);
+  },
   addObject: function(object) {
     var base = {
       x: editor.window.width/2,
@@ -33,6 +67,9 @@ var editor = {
         canvas = document.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         src = '/images/items/'+object.id+'_400x400.jpg';
+        
+    canvas.setAttribute('id','item_'+object.id);
+    $(canvas).data('object',object);
   
     img.onload = function() {
       canvas.width = img.width;
@@ -42,26 +79,8 @@ var editor = {
       ctx.drawImage(img, 0, 0, img.width, img.height);
       
       // Remove the background if required
-      object.media.removed = "true";
       if(object.media.removed == "true") {
-        var imageData = ctx.getImageData(0,0,img.width,img.height);
-        var pixel = imageData.data;
-        var r = 0, g = 1, b = 2, a = 3;
-        
-        /*
-        swatchMin = {
-          r: ,
-          g: ,
-          b: ,
-          a: 
-        }
-        */
-        for(var p = 0; p < pixel.length; p+=4) {
-          if((pixel[p+r] >= 250 && pixel[p+r] <= 255) && (pixel[p+g] >= 250 && pixel[p+g] <= 255) && (pixel[p+b] >= 250 && pixel[p+b] <= 255)) {
-            pixel[p+a] = 0;
-          }
-        }
-        ctx.putImageData(imageData,0,0);
+        editor.removeColour(object,ctx,img);
       }
       
       $(canvas).css({
@@ -90,6 +109,14 @@ var editor = {
     
     img.src = src;
   },
+  initToolbar: function(object) {
+    $("#toolbar input").data("id",object.id);
+    if(object.media.removed == "true") {
+      $("#removebg").attr("checked","checked");
+    } else {
+      $("#removebg").removeAttr("checked");
+    }
+  },
   defaults: {
     width: 1960,
     height: 1440
@@ -103,29 +130,21 @@ var editor = {
     width: $(window).width(),
     height: $(window).height()
   },
-  /*
-  touchstart: function(event) {
-    if(!$(this).hasClass("object"))
-    $(".object").removeClass("active");
-  },
-  */
   touch: function(event) {
     var touch = event.changedTouches[0];
     
-    if($(this).hasClass("active")) {
-      if(!editor.events.dragging){
-        editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
-      }
-    } else {
-      $(".active").removeClass("active");
-      $(this).addClass("target");
-      if(!editor.events.dragging){
-        editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
-      }
+    $(".active").removeClass("active");
+    $(this).addClass("active");
+    $("#toolbar").fadeIn();
+    
+    if(!editor.events.dragging){
+      editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
     }
+    
+    // Setup toolbar
+    editor.initToolbar($(this).data('object'));
   },
-  touchend: function(evt) {
-    $(".target").removeClass("target").addClass("active");
+  touchend: function(evt) { 
     editor.events.dragging = false;
   },
   touchmove: function(event) {

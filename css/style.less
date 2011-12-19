@@ -66,7 +66,11 @@ td { vertical-align: top; }
 /* ==|== primary styles ===================================================== */
 html, body {
   height: 100%;
-  background: #ccc;
+  background: url(http://olioboard.com/images/frame/tile.png?v2);
+}
+
+.left {
+  float: left;
 }
 #canvas {
   height: 100%;
@@ -75,9 +79,23 @@ html, body {
 
 canvas {
   position: absolute;
+  
   &.active {
-    opacity: 0.5;
+    border: 3px dashed rgba(106,139,163,0.25);
   }
+}
+
+#toolbar {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 20px;
+  padding: 5px 10px;
+  border: 1px solid #6a8ba3;
+  border-width: 0 1px 1px 1px;
+  .box-shadow(0 1px 3px rgba(0,0,0,0.5));
+  .border-radius(0 0 5px 5px);
+  .gradient(#569eaf,#6a8ba3);
 }
 
 
