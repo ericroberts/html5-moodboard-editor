@@ -15,24 +15,43 @@ $(function() {
   
   $("#removebg").live("change", function() {
     
-    var id = $(this).data("id"),
-        canvas = document.getElementById('item_'+id),
-        ctx = canvas.getContext('2d'),
-        img = new Image(),
-        object = $(canvas).data('object');
-        
-    img.src = '/images/items/'+id+'_400x400.jpg';
-    
+    var data = editor.getCanvas($("#toolbar").data('id'));
     if($(this).is(":checked")) {
-      editor.removeColour(null,ctx,img);
-      object.media.removed = "true";
+      data.img.onload = function() { editor.removeColour(data.object,data.ctx,data.img); }
+      data.object.media.removed = "true";
     } else {
-      img.onload = function() { ctx.drawImage(img, 0, 0, img.width, img.height); }
-      object.media.removed = null;
+      data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
+      data.object.media.removed = null;
     }
     
-    $(canvas).data('object',object);
+    $(canvas).data('object',data.object);
     
+  });
+  
+  $("#advanced_bg").live("click", function() {
+    $("#bg_tolerance").fadeIn(300);
+    editor.advancedBG(editor.getCanvas($("#toolbar").data('id')));
+    return false;
+  });
+  
+  $("#bg_tolerance").keyup(function() {
+    var data = editor.getCanvas($("#toolbar").data('id'));
+    data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
+    editor.removeColour(null,data.ctx,data.img,null,parseInt($("#bg_tolerance").val(),10));
+  });
+  
+  $(".overlay_close").live("click", function() {
+    editor.closeOverlay();
+  });
+  
+  $("canvas").live("click", function() {
+    
+    $(".active").removeClass("active");
+    $(this).addClass("active");
+    $("#toolbar").fadeIn();
+    
+    // Setup toolbar
+    editor.initToolbar($(this).data('object'));
   });
   
 });
@@ -45,13 +64,71 @@ $(window).resize(function() {
 });
 
 var editor = {
-  removeColour: function(object,ctx,img,colour) {
+  defaults: {
+    width: 1960,
+    height: 1440
+  },
+  events: {
+    dragging: false,
+    sizing: false,
+    rotating: 0
+  },
+  window: {
+    width: $(window).width(),
+    height: $(window).height()
+  },
+  closeOverlay: function() {
+    $(".overlay,.overlay_close").fadeOut(300, function() {
+      $(".overlay,.overlay_close").remove();
+    });
+    var object = $(".overlay_object").data('position');
+    $(".overlay_object").animate({
+      width: object['width'],
+      height: object['height'],
+      top: object['top'],
+      left: object['left'],
+      margin: ""
+    },300).removeClass("overlay_object");
+  },
+  advancedBG: function(object) {
+    $("body").prepend($("<div class='overlay'></div><a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300));
+    var el = $(object.canvas);
+    $(object.canvas).data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
+      width: 400,
+      height: 400,
+      top: editor.window.height/2,
+      left: editor.window.width/2,
+      marginTop: -200,
+      marginLeft: -200
+    },300).addClass("overlay_object");
+    
+    $(object.canvas).bind("click",editor.pickColour($(object.canvas)));
+  },
+  pickColour: function(canvas) {
+    console.log(canvas);
+  },
+  getCanvas: function(id) {
+    var data = {
+      canvas: document.getElementById('item_'+id),
+      img: new Image()
+    }
+    data.ctx = data.canvas.getContext('2d');
+    data.object = $(data.canvas).data('object');
+    data.img.src = editor.imgUrl(id);
+    return data;
+  },
+  imgUrl: function(id) {
+    return '/images/items/'+id+'_400x400.jpg';
+  },
+  removeColour: function(object,ctx,img,colour,t) {
+    if(!t && t != 0) { t = 5; }
     var imageData = ctx.getImageData(0,0,img.width,img.height);
     var pixel = imageData.data;
     var r = 0, g = 1, b = 2, a = 3;
     
+    var swatch 
     for(var p = 0; p < pixel.length; p+=4) {
-      if((pixel[p+r] >= 250 && pixel[p+r] <= 255) && (pixel[p+g] >= 250 && pixel[p+g] <= 255) && (pixel[p+b] >= 250 && pixel[p+b] <= 255)) {
+      if((pixel[p+r] >= 255-t && pixel[p+r] <= 255+t) && (pixel[p+g] >= 255-t && pixel[p+g] <= 255+t) && (pixel[p+b] >= 250-t && pixel[p+b] <= 255+t)) {
         pixel[p+a] = 0;
       }
     }
@@ -86,14 +163,9 @@ var editor = {
       $(canvas).css({
         width: 400*object.media.scale*editor.window.zoom,
         height: 400*object.media.scale*editor.window.zoom,
-        top: base.y + object.y*editor.window.zoom,
-        left: base.x + object.x*editor.window.zoom,
+        top: base.y + object.y*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
+        left: base.x + object.x*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         webkitTransform: "rotate("+object.media.rotation+"deg)"
-      });
-      
-      $(canvas).css({
-        marginTop: -$(canvas).height()/2,
-        marginLeft: -$(canvas).width()/2
       });
       
       // Add touch events
@@ -110,25 +182,12 @@ var editor = {
     img.src = src;
   },
   initToolbar: function(object) {
-    $("#toolbar input").data("id",object.id);
+    $("#toolbar").data("id",object.id);
     if(object.media.removed == "true") {
       $("#removebg").attr("checked","checked");
     } else {
       $("#removebg").removeAttr("checked");
     }
-  },
-  defaults: {
-    width: 1960,
-    height: 1440
-  },
-  events: {
-    dragging: false,
-    sizing: false,
-    rotating: 0
-  },
-  window: {
-    width: $(window).width(),
-    height: $(window).height()
   },
   touch: function(event) {
     var touch = event.changedTouches[0];
@@ -167,11 +226,12 @@ var editor = {
     if($(this).hasClass("active")) {
       if(editor.events.sizing){
         $(this).width(Math.min(editor.events.sizing[0] * event.scale, 600) + "px")
-          .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px")
-          .css({
-            marginTop: -$(this).width()/2,
-            marginLeft: -$(this).height()/2,
-          });
+          .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px");
+          
+        $(this).css({
+          top: this.style.top-($(this).height()-editor.events.sizing[1])/2,
+          left: this.style.left-($(this).width()-editor.events.sizing[0])/2,
+        });
         this.style.webkitTransform = "rotate(" + ((editor.events.rotating + event.rotation) % 360) + "deg)";
       }
     }

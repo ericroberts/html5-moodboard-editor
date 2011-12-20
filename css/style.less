@@ -77,11 +77,37 @@ html, body {
   overflow: auto;
 }
 
+.overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.5);
+  z-index: 599;
+}
+.overlay_close {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -205px 0 0 188px;
+  width: 26px;
+  height: 26px;
+  text-indent: -100000px;
+  background: url(../images/icons/close.png);
+  z-index: 601;
+}
+
 canvas {
   position: absolute;
   
   &.active {
-    border: 3px dashed rgba(106,139,163,0.25);
+    border: 3px dashed rgba(106,139,163,0.3);
+    margin: -3px 0 0 -3px;
+  }
+  &.overlay_object {
+    z-index: 600;
+    border: 1px solid rgba(106,139,163,0.5);
+    .border-radius(2px);
+    .box-shadow(0 0 20px rgba(0,0,0,0.5));
   }
 }
 
@@ -93,6 +119,7 @@ canvas {
   padding: 5px 10px;
   border: 1px solid #6a8ba3;
   border-width: 0 1px 1px 1px;
+  z-index: 1000;
   .box-shadow(0 1px 3px rgba(0,0,0,0.5));
   .border-radius(0 0 5px 5px);
   .gradient(#569eaf,#6a8ba3);
