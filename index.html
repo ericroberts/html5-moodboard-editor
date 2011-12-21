@@ -24,7 +24,12 @@
       </div>
       <div class="left">
         <a href="#advancedbgremoval" id="advanced_bg">Advanced Options</a>
-        <input type="text" name="bg_tolerance" id="bg_tolerance" placeholder="tolerance" style="display: none;" />
+        <div class="bg_advanced hide">
+          <label for="#bg_tolerance">Tolerance</label>
+          <input type="text" name="bg_tolerance" id="bg_tolerance" placeholder="tolerance" class="touch_slider" />
+          <label for="#bg_feather">Feather</label>
+          <input type="text" name="bg_feather" id="bg_feather" placeholder="feather" class="touch_slider" />
+        </div>
       </div>
     </div>
   </div>
@@ -33,6 +38,7 @@
   <div id="canvas">
   </div>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script src="/js/plugins/jquery.touchSlider.js"></script>
   <script src="/js/editor.js"></script>
   <!--[if lt IE 7 ]>
     <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>

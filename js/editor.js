@@ -6,6 +6,14 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
+  
+  $("#bg_tolerance").touchSlider({
+    value: 5
+  });
+  $("#bg_feather").touchSlider({
+    value: 2
+  });
+  
   $.get("/boards/1.txt", function(data) {
     editor.currentboard = data;
     $.each(data.olioboard.object, function(i, object) {
@@ -17,7 +25,7 @@ $(function() {
     
     var data = editor.getCanvas($("#toolbar").data('id'));
     if($(this).is(":checked")) {
-      data.img.onload = function() { editor.removeColour(data.object,data.ctx,data.img); }
+      data.img.onload = function() { editor.removeColour(data.ctx,data.img); }
       data.object.media.removed = "true";
     } else {
       data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
@@ -29,19 +37,31 @@ $(function() {
   });
   
   $("#advanced_bg").live("click", function() {
-    $("#bg_tolerance").fadeIn(300);
     editor.advancedBG(editor.getCanvas($("#toolbar").data('id')));
     return false;
   });
   
-  $("#bg_tolerance").keyup(function() {
-    var data = editor.getCanvas($("#toolbar").data('id'));
-    data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
-    editor.removeColour(null,data.ctx,data.img,null,parseInt($("#bg_tolerance").val(),10));
+  $("#bg_tolerance").change(function() {
+    if($("#removebg").is(":checked")) {
+      var data = editor.getCanvas($("#toolbar").data('id'));
+      data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
+      var f = $("#bg_feather").val() ? parseInt($("#bg_feather").val(),10) : null;
+      editor.removeColour(data.ctx,data.img,parseInt($("#bg_tolerance").val(),10),f);
+    }
+  });
+  
+  $("#bg_feather").change(function() {
+    if($("#removebg").is(":checked")) {
+      var data = editor.getCanvas($("#toolbar").data('id'));
+      data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
+      var t = $("#bg_tolerance").val() ? parseInt($("#bg_tolerance").val(),10) : null;
+      editor.removeColour(data.ctx,data.img,t,parseInt($("#bg_feather").val(),10));
+    }
   });
   
   $(".overlay_close").live("click", function() {
     editor.closeOverlay();
+    return false;
   });
   
   $("canvas").live("click", function() {
@@ -91,7 +111,8 @@ var editor = {
     },300).removeClass("overlay_object");
   },
   advancedBG: function(object) {
-    $("body").prepend($("<div class='overlay'></div><a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300));
+    $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); }));
+    $(".bg_advanced").fadeIn(300);
     var el = $(object.canvas);
     $(object.canvas).data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
       width: 400,
@@ -101,11 +122,6 @@ var editor = {
       marginTop: -200,
       marginLeft: -200
     },300).addClass("overlay_object");
-    
-    $(object.canvas).bind("click",editor.pickColour($(object.canvas)));
-  },
-  pickColour: function(canvas) {
-    console.log(canvas);
   },
   getCanvas: function(id) {
     var data = {
@@ -120,19 +136,35 @@ var editor = {
   imgUrl: function(id) {
     return '/images/items/'+id+'_400x400.jpg';
   },
-  removeColour: function(object,ctx,img,colour,t) {
+  removeColour: function(ctx,i,t,f) {
+    
     if(!t && t != 0) { t = 5; }
-    var imageData = ctx.getImageData(0,0,img.width,img.height);
+    if(!f && f != 0) { f = 2; }
+    
+    var step = Math.round(255/f);
+    
+    var c = {
+      r: 255,
+      g: 255,
+      b: 255
+    }
+    
+    var imageData = ctx.getImageData(0,0,i.width,i.height);
     var pixel = imageData.data;
     var r = 0, g = 1, b = 2, a = 3;
     
-    var swatch 
     for(var p = 0; p < pixel.length; p+=4) {
-      if((pixel[p+r] >= 255-t && pixel[p+r] <= 255+t) && (pixel[p+g] >= 255-t && pixel[p+g] <= 255+t) && (pixel[p+b] >= 250-t && pixel[p+b] <= 255+t)) {
+      if((pixel[p+r] >= c.r-t && pixel[p+r] <= c.r+t) && (pixel[p+g] >= c.g-t && pixel[p+g] <= c.g+t) && (pixel[p+b] >= c.b-t && pixel[p+b] <= c.b+t)) {
         pixel[p+a] = 0;
+      } else if((pixel[p+r] >= c.r-t-f && pixel[p+r] <= c.r+t+f) && (pixel[p+g] >= c.g-t-f && pixel[p+g] <= c.g+t+f) && (pixel[p+b] >= c.b-t-f && pixel[p+b] <= c.b+t+f)) {
+        var diff = Math.abs(pixel[p+r] - c.r);
+        pixel[p+a] = editor.getAlpha(diff,step);
       }
     }
     ctx.putImageData(imageData,0,0);
+  },
+  getAlpha: function(diff,step) {
+    return diff*step;
   },
   addObject: function(object) {
     var base = {
