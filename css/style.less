@@ -102,7 +102,7 @@ a {
   height: 26px;
   text-indent: -100000px;
   background: url(../images/icons/close.png);
-  z-index: 601;
+  z-index: 602;
 }
 
 .advanced {
@@ -110,6 +110,16 @@ a {
   &.activated {
     opacity: 1;
   }
+}
+.checkerboard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  margin: -200px 0 0 -200px;
+  z-index: 600;
+  background: url(../images/frame/checkerboard.png) 50% 50%;
 }
 
 canvas {
@@ -120,7 +130,7 @@ canvas {
     margin: -3px 0 0 -3px;
   }
   &.overlay_object {
-    z-index: 600;
+    z-index: 601;
     border: 1px solid rgba(106,139,163,0.5);
     .border-radius(2px);
     .box-shadow(0 0 20px rgba(0,0,0,0.5));

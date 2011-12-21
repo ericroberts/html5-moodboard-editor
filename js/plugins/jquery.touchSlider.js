@@ -56,7 +56,7 @@
           $element.val(value).change();
         }
       });
-      $("a",plugin.settings.markup).mouseup(function(e) {
+      $(document).mouseup(function(e) {
         $(this).data('mousedown',false);
         dragging = false;
       });
@@ -64,7 +64,6 @@
       $("a",plugin.settings.markup).css({
         left: (plugin.settings.value/Math.abs(plugin.settings.range.end-plugin.settings.range.start))*plugin.settings.width
       });
-      console.log($("a",plugin.settings.markup).css("left"));
       
       $element.val(plugin.settings.value);
     }

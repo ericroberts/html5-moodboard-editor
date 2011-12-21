@@ -112,8 +112,8 @@ var editor = {
     
   },
   closeOverlay: function() {
-    $(".overlay,.overlay_close").fadeOut(300, function() {
-      $(".overlay,.overlay_close").remove();
+    $(".overlay,.overlay_close,.checkerboard").fadeOut(300, function() {
+      $(".overlay,.overlay_close,.checkerboard").remove();
     });
     var object = $(".overlay_object").data('position');
     $(".overlay_object").animate({
@@ -126,8 +126,17 @@ var editor = {
       $(this).css("margin","");
     }).removeClass("overlay_object");
   },
+  overlayCanvas: function(object) {
+    $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { 
+      $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); 
+      $("body").prepend($("<div class='checkerboard'></div>").css({
+        top: editor.window.height/2,
+        left: editor.window.width/2
+      }).hide().fadeIn(300));
+    }));
+  },
   advancedBG: function(object) {
-    $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); }));
+    editor.overlayCanvas(object);
     $(".bg_advanced").fadeIn(300);
     var el = $(object.canvas);
     $(object.canvas).data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
@@ -216,18 +225,29 @@ var editor = {
         webkitTransform: "rotate("+object.media.rotation+"deg)"
       });
       
-      // Add touch events
-      canvas.addEventListener('touchmove', editor.touchmove, false);
-      canvas.addEventListener('gesturestart', editor.gesture, false);
-      canvas.addEventListener('gesturechange', editor.gesturechange, false);
-      canvas.addEventListener('gestureend', editor.gestureend, false);
-      canvas.addEventListener('touchstart', editor.touch, false);
-      
       document.getElementById('canvas').appendChild(canvas);
-    
+      
+      // Add touch events
+      editor.addTouchListeners(object.id);
     }
     
     img.src = src;
+  },
+  addTouchListeners: function(id) {
+    var canvas = document.getElementById('item_'+id);
+    canvas.addEventListener('touchmove', editor.touchmove, false);
+    canvas.addEventListener('gesturestart', editor.gesture, false);
+    canvas.addEventListener('gesturechange', editor.gesturechange, false);
+    canvas.addEventListener('gestureend', editor.gestureend, false);
+    canvas.addEventListener('touchstart', editor.touch, false);
+  },
+  removeTouchListeners: function(id) {
+    var canvas = document.getElementById('item_'+id);
+    canvas.removeEventListener('touchmove', editor.touchmove, false);
+    canvas.removeEventListener('gesturestart', editor.gesture, false);
+    canvas.removeEventListener('gesturechange', editor.gesturechange, false);
+    canvas.removeEventListener('gestureend', editor.gestureend, false);
+    canvas.removeEventListener('touchstart', editor.touch, false);
   },
   initToolbar: function(object) {
     $("#toolbar").data("id",object.id);
