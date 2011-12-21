@@ -25,9 +25,11 @@ $(function() {
     
     var data = editor.getCanvas($("#toolbar").data('id'));
     if($(this).is(":checked")) {
+      $("#advanced_bg").addClass("activated");
       data.img.onload = function() { editor.removeColour(data.ctx,data.img); }
       data.object.media.removed = "true";
     } else {
+      $("#advanced_bg").removeClass("activated");
       data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
       data.object.media.removed = null;
     }
@@ -37,7 +39,16 @@ $(function() {
   });
   
   $("#advanced_bg").live("click", function() {
-    editor.advancedBG(editor.getCanvas($("#toolbar").data('id')));
+    if($(this).hasClass("activated")) {
+      if($(this).hasClass("active")) {
+        $(this).removeClass("active");
+        editor.closeOverlay();
+        $(".bg_advanced").fadeOut(300);
+      } else {
+        $(this).addClass("active");
+        editor.advancedBG(editor.getCanvas($("#toolbar").data('id')));
+      }
+    }
     return false;
   });
   
@@ -97,6 +108,9 @@ var editor = {
     width: $(window).width(),
     height: $(window).height()
   },
+  resetToolbar: function() {
+    
+  },
   closeOverlay: function() {
     $(".overlay,.overlay_close").fadeOut(300, function() {
       $(".overlay,.overlay_close").remove();
@@ -107,8 +121,10 @@ var editor = {
       height: object['height'],
       top: object['top'],
       left: object['left'],
-      margin: ""
-    },300).removeClass("overlay_object");
+      margin: 0
+    },300,function() {
+      $(this).css("margin","");
+    }).removeClass("overlay_object");
   },
   advancedBG: function(object) {
     $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); }));
