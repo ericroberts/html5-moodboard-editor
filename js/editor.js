@@ -6,7 +6,6 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
-  
   $("#bg_tolerance").touchSlider({
     value: 5
   });
@@ -75,16 +74,6 @@ $(function() {
     return false;
   });
   
-  $("canvas").live("click", function() {
-    
-    $(".active").removeClass("active");
-    $(this).addClass("active");
-    $("#toolbar").fadeIn();
-    
-    // Setup toolbar
-    editor.initToolbar($(this).data('object'));
-  });
-  
 });
 
 $(window).resize(function() {
@@ -137,7 +126,6 @@ var editor = {
   },
   advancedBG: function(object) {
     editor.overlayCanvas(object);
-    $(".bg_advanced").fadeIn(300);
     var el = $(object.canvas);
     $(object.canvas).data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
       width: 400,
@@ -147,6 +135,14 @@ var editor = {
       marginTop: -200,
       marginLeft: -200
     },300).addClass("overlay_object");
+    
+    $("#toolbar").animate({
+      top: -100
+    },300, function() {
+      $("#advancedbgremoval").css("top",-100).show().animate({
+        top: 0
+      },300);
+    });
   },
   getCanvas: function(id) {
     var data = {
@@ -229,6 +225,7 @@ var editor = {
       
       // Add touch events
       editor.addTouchListeners(object.id);
+      editor.addClickListeners(object.id);
     }
     
     img.src = src;
@@ -249,8 +246,19 @@ var editor = {
     canvas.removeEventListener('gestureend', editor.gestureend, false);
     canvas.removeEventListener('touchstart', editor.touch, false);
   },
+  addClickListeners: function(id) {
+    $("#item_"+id).click(function() {
+      editor.activateObject($(this));
+    });
+  },
+  activateObject: function(canvas) {
+    var object = canvas.data('object');
+    $(".active").removeClass("active");
+    canvas.addClass("active");
+    editor.initToolbar(canvas.data('object'));
+  },
   initToolbar: function(object) {
-    $("#toolbar").data("id",object.id);
+    $("#toolbar").fadeIn(300).data("id",object.id);
     if(object.media.removed == "true") {
       $("#removebg").attr("checked","checked");
     } else {
@@ -258,18 +266,13 @@ var editor = {
     }
   },
   touch: function(event) {
-    var touch = event.changedTouches[0];
+    editor.activateObject($(this));
     
-    $(".active").removeClass("active");
-    $(this).addClass("active");
-    $("#toolbar").fadeIn();
+    var touch = event.changedTouches[0];
     
     if(!editor.events.dragging){
       editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
     }
-    
-    // Setup toolbar
-    editor.initToolbar($(this).data('object'));
   },
   touchend: function(evt) { 
     editor.events.dragging = false;

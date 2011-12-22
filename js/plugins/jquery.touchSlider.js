@@ -21,10 +21,19 @@
         
     plugin.init = function() {
       plugin.settings = $.extend({}, defaults, options); 
-      
-      $(element).hide().before(plugin.settings.markup);
+
+      $element.hide().before(plugin.settings.markup);
       
       plugin.settings.markup.width(plugin.settings.width);
+      
+      // Check for the value of the input changing
+      $element.change(function() {
+        var value = $(this).val(),
+            range = Math.abs(plugin.settings.range.end-plugin.settings.range.start),
+            position = (value/range)*plugin.settings.width;
+        
+        $("a",plugin.settings.markup).css("left",position);
+      });
       
       // Touch
       $("a",plugin.settings.markup).each(function() { this.addEventListener('touchstart', touch, false); });
@@ -49,7 +58,7 @@
           $(this).css("left",position);
 
           // Find where we are in the range
-          var percent = position/plugin.settings.markup.width(),
+          var percent = position/plugin.settings.width,
               range = Math.abs(plugin.settings.range.end-plugin.settings.range.start),
               value = (percent*range)+plugin.settings.range.start;
 

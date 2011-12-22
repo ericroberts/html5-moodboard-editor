@@ -15,29 +15,74 @@
   <script src="/js/libs/modernizr-2.0.6.min.js"></script>
 </head>
 <body>
-  <div id="toolbar">
+  <div id="toolbar" class="toolbar">
+    <div class="tool">
+      <a href="#" class="tool_button">Duplicate</a><br />
+      <a href="#" class="tool_button">Remove</a>
+    </div>
+    <div class="tool">
+      <a href="#" class="tool_button">Back</a>
+      <a href="#" class="tool_button">To Back</a><br />
+      <a href="#" class="tool_button">Ahead</a>
+      <a href="#" class="tool_button">To Front</a>
+    </div>
+    <div class="tool">
+      <h3>Orientation</h3>
+      <a href="#" class="tool_button">Flip</a>
+      <a href="#" class="tool_button">Flop</a>
+    </div>
+    <div class="tool">
+      <h3>Rotation</h3>
+      <input type="checkbox" name="lock_rotation" id="lock_rotation" />
+      <label for="lock_rotation">Lock</label>
+      <input type="text" name="rotation" id="rotation" />
+    </div>
+    <div class="tool">
+      <h3>Scale:</h3>
+      <input type="checkbox" name="lock_scale" id="lock_scale" />
+      <label for="lock_scale">Lock</label>
+      <input type="text" name="scale" id="scale" />
+    </div>
+    <div class="tool">
+      <a href="#" class="tool_button">Crop</a><br />
+      <a href="#" class="tool_button">Frame</a>
+    </div>
     <div class="tool">
       <h3>Background</h3>
-      <div class="left">
-        <input type="checkbox" name="removebg" id="removebg" />
-        <label for="removebg">Remove</label>
-      </div>
-      <div class="left">
-        <a href="#advancedbgremoval" id="advanced_bg" class="advanced tool_button">Advanced</a>
-        <div class="bg_advanced hide">
-          <label for="#bg_tolerance">Tolerance</label>
-          <input type="text" name="bg_tolerance" id="bg_tolerance" placeholder="tolerance" class="touch_slider" />
-          <label for="#bg_feather">Feather</label>
-          <input type="text" name="bg_feather" id="bg_feather" placeholder="feather" class="touch_slider" />
-          <a class="button">Save</a>
-        </div>
-      </div>
+      <input type="checkbox" name="removebg" id="removebg" />
+      <label for="removebg">Remove</label>
+      <a href="#advancedbgremoval" id="advanced_bg" class="advanced tool_button">Advanced</a>
     </div>
     <div class="clear"></div>
+  </div>
+  <div id="advancedbgremoval" class="toolbar">
+    <div class="toolbar_title">
+      <h3>Remove<br />Background<br />Settings</h3>
+    </div>
+    <div class="tool">
+      <label for="#bg_tolerance">Tolerance</label>
+      <input type="text" name="bg_tolerance" id="bg_tolerance" placeholder="tolerance" class="touch_slider" />
+    </div>
+    <div class="tool">
+      <label for="#bg_feather">Feather</label>
+      <input type="text" name="bg_feather" id="bg_feather" placeholder="feather" class="touch_slider" />
+    </div>
+    <div class="tool">
+      <a href="#" class="tool_button">Reset</a>
+      <a href="#" class="tool_button">Cancel</a>
+      <a href="#" class="tool_button">Save</a>
+    </div>
   </div>
   <div id="items">
   </div>
   <div id="canvas">
+  </div>
+  <div id="item_details">
+    <img src="" id="active_item_img" />
+    <h3 id="active_item_name"></h3>
+    <p id="active_item_description"></p>
+    <a class="button" href="" id="active_item_link">Shop</a>
+    <a href="" id="active_item_brand">View more from this brand</a>
   </div>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
   <script src="/js/plugins/jquery.touchSlider.js"></script>
