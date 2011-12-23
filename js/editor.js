@@ -256,6 +256,27 @@ var editor = {
     $(".active").removeClass("active");
     canvas.addClass("active");
     editor.initToolbar(canvas.data('object'));
+    
+    $.get("items/items.json", function(data) {
+      for(var i = 0; i < data.length; i++) {
+        var item = data[i].item;
+        if(item.id == object.id) {
+          $("#active_item_name").text(item.name);
+          $("#active_item_desc").text(item.description);
+          $("#active_item_img").attr("src",editor.imgUrl(item.id));
+          if(item.store_url) {
+            $("#active_item_link").attr("href",item.store_url);
+          } else {
+            $("#active_item_link").hide();
+          }
+          if(item.vendor_url) {
+            $("#active_item_brand").attr("href",item.vendor_url);
+          } else {
+            $("#active_item_brand").hide();
+          }
+        }
+      }
+    },"json");
   },
   initToolbar: function(object) {
     $("#toolbar").fadeIn(300).data("id",object.id);
