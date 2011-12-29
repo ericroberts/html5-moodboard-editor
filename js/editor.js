@@ -175,9 +175,8 @@ $(function() {
     }
   });
   
-  $(".cancel").live("click", function() {
-    var data = editor.getCanvas($(".active").data('ref'));
-    data.ctx.restore();
+  $(".cancel,.save").live("click", function() {
+    
     var toolbar = $(this).closest(".toolbar");
     toolbar.animate({
       top: -100
@@ -501,8 +500,10 @@ var editor = {
           */
 
           $("#scale").val(Math.round(event.scale*100)+"%");
-          data.media.hScale = event.scale*100;
-          data.media.vScale = event.scale*100;
+          //data.media.hScale = event.scale*100;
+          //data.media.vScale = event.scale*100;
+          
+          //data.media.scale = data.media.scale+event.scale;
         }
         
         // Rotating
