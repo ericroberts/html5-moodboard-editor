@@ -35,6 +35,8 @@ $(function() {
     newobj.y = newobj.y+25;
     
     editor.addObject(newobj,Math.max.apply(Math,editor.items.indexes)+1);
+    
+    return false;
   });
   
   $(".remove").live("click", function() {
@@ -43,6 +45,7 @@ $(function() {
         $(".active").remove();
       });
     }
+    return false;
   });
   
   $(".flip").live("click", function() {
