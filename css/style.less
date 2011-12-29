@@ -66,7 +66,8 @@ td { vertical-align: top; }
 /* ==|== primary styles ===================================================== */
 html, body {
   height: 100%;
-  background: url(http://olioboard.com/images/frame/tile.png?v2);
+  overflow: hidden;
+  background: url(../images/frame/tile.png);
 }
 
 a {
@@ -85,6 +86,10 @@ a {
 #canvas {
   height: 100%;
   overflow: auto;
+  #canvas_scale {
+    width: 100%;
+    height: 100%;
+  }
 }
 .overlay {
   position: fixed;
@@ -124,6 +129,7 @@ a {
 
 canvas {
   position: absolute;
+  .box-shadow(1px 1px 5px rgba(0,0,0,0.3));
   
   &.active {
     border: 3px dashed rgba(106,139,163,0.3);
@@ -135,6 +141,9 @@ canvas {
     .border-radius(2px);
     .box-shadow(0 0 20px rgba(0,0,0,0.5));
   }
+  &.removed_bg {
+    .box-shadow(none);
+  }
 }
 
 .toolbar {
@@ -145,7 +154,7 @@ canvas {
   border: 1px solid #6a8ba3;
   border-width: 0 1px 1px 1px;
   z-index: 1000;
-  .box-shadow(0 1px 3px rgba(0,0,0,0.5));
+  .box-shadow(1 1px 5px rgba(0,0,0,0.3));
   .border-radius(0 0 5px 5px);
   .gradient(#569eaf,#6a8ba3);
   
@@ -154,8 +163,9 @@ canvas {
     width: 40px;
     border: 1px solid rgba(0,0,0,0.6);
     font: normal 9pt Arial;
-    padding: 3px 8px;
+    padding: 3px;
     text-align: center;
+    background: #fff;
     .border-radius;
     .double-box-shadow(inset 0 1px 3px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.1));
     
@@ -244,20 +254,43 @@ canvas {
 
 #item_details {
   position: fixed;
-  bottom: 0;
+  bottom: -124px;
   left: 10px;
   width: 300px;
+  height: 102px;
+  overflow: hidden;
   padding: 10px;
   border: 1px solid #b9d4de;
   border-width: 1px 1px 0 1px;
+  z-index: 100;
+  .box-shadow(1px 1px 5px rgba(0,0,0,0.3));
   .border-radius(5px 5px 0 0);
   .gradient(#fff,darken(#fff,5));
   
+  .details {
+    width: 188px;
+    float: left;
+  }
+  h3 {
+    margin: 0 0 5px 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  p {
+    margin: 0 0 5px 0;
+    line-height: 1.2em;
+    height: 3.6em;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
   img {
     float: left;
     margin: 0 10px 0 0;
     width: 100px;
     height: 100px;
+    display: block;
+    border: 1px solid #b9d4de;
   }
 }
 

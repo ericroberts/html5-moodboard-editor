@@ -86,6 +86,7 @@
     }
     
     var drag = function(e) {
+      e.preventDefault();
       var touch = e.changedTouches[0];
       if(dragging) {
         var distance = touch.pageX - dragging;

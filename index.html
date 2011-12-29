@@ -9,7 +9,8 @@
   <title>HTML5 Moodboard Editor</title>
   <meta name="description" content="">
   <meta name="author" content="">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="shortcut icon" href="/images/favicon.png"> 
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/libs/modernizr-2.0.6.min.js"></script>
@@ -21,10 +22,10 @@
       <a href="#" class="tool_button">Remove</a>
     </div>
     <div class="tool">
-      <a href="#" class="tool_button">Back</a>
-      <a href="#" class="tool_button">To Back</a><br />
-      <a href="#" class="tool_button">Ahead</a>
-      <a href="#" class="tool_button">To Front</a>
+      <a href="#" class="tool_button depth back">Back</a>
+      <a href="#" class="tool_button depth toback">To Back</a><br />
+      <a href="#" class="tool_button depth front">Ahead</a>
+      <a href="#" class="tool_button depth tofront">To Front</a>
     </div>
     <div class="tool">
       <h3>Orientation</h3>
@@ -35,13 +36,13 @@
       <h3>Rotation</h3>
       <input type="checkbox" name="lock_rotation" id="lock_rotation" />
       <label for="lock_rotation">Lock</label>
-      <input type="text" name="rotation" id="rotation" />
+      <input type="text" name="rotation" id="rotation" disabled="disabled" />
     </div>
     <div class="tool">
       <h3>Scale:</h3>
       <input type="checkbox" name="lock_scale" id="lock_scale" />
       <label for="lock_scale">Lock</label>
-      <input type="text" name="scale" id="scale" />
+      <input type="text" name="scale" id="scale" disabled="disabled" />
     </div>
     <div class="tool">
       <a href="#" class="tool_button">Crop</a><br />
@@ -69,22 +70,26 @@
     </div>
     <div class="tool">
       <a href="#" class="tool_button">Reset</a>
-      <a href="#" class="tool_button">Cancel</a>
+      <a href="#" class="tool_button cancel">Cancel</a>
       <a href="#" class="tool_button">Save</a>
     </div>
   </div>
   <div id="items">
   </div>
   <div id="canvas">
+    <div id="canvas_scale"></div>
   </div>
   <div id="item_details">
     <img src="" id="active_item_img" />
-    <h3 id="active_item_name"></h3>
-    <p id="active_item_desc"></p>
-    <a class="button" href="" id="active_item_link">Shop</a>
-    <a href="" id="active_item_brand">View more from this brand</a>
+    <div class="details">
+      <h3 id="active_item_name"></h3>
+      <p id="active_item_desc"></p>
+      <a class="button" href="" id="active_item_link">Shop</a>
+      <a href="" id="active_item_brand">View more from this brand</a>
+    </div>
   </div>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="/js/libs/jquery-1.7.1.min.js"><\/script>')</script>
   <script src="/js/plugins/jquery.touchSlider.js"></script>
   <script src="/js/editor.js"></script>
   <!--[if lt IE 7 ]>

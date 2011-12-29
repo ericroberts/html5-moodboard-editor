@@ -15,20 +15,64 @@ $(function() {
   
   $.get("/boards/1.txt", function(data) {
     editor.currentboard = data;
-    $.each(data.olioboard.object, function(i, object) {
-      editor.addObject(object);
-    });
+    for(var i = 0; i < data.olioboard.object.length; i++) {
+      var object = data.olioboard.object[i];
+      editor.addObject(object,i);
+    }
   },"json");
+  
+  $("#rotation").live("keyup", function() {
+    var deg = $(this).val();
+    $(".active").css({
+      webkitTransform: "rotate("+deg+"deg)"
+    });
+  });
+  
+  $(".depth").live("click", function() {
+    var curr = $(".active").data('z');
+    
+    if($(this).hasClass("front")) {      
+      $("canvas").each(function() {
+        if($(this).data('z') == curr+1) {
+          console.log('found it');
+          $(this).data('z',curr);
+          $(this).css("z-index",curr);
+        }
+      });
+      $(".active").css("z-index",curr+1);
+      $(".active").data('z',curr+1);
+    }
+  });
+  
+  $("#lock_rotation").live("change", function() {
+    var data = $(".active").data("object");
+    if($(this).is(":checked")) {
+      data.media.angleLock = 1;
+    } else {
+      data.media.angleLock = 0;
+    }
+  });
+  
+  $("#lock_scale").live("change", function() {
+    var data = $(".active").data("object");
+    if($(this).is(":checked")) {
+      data.media.scaleLock = 1;
+    } else {
+      data.media.scaleLock = 0;
+    }
+  });
   
   $("#removebg").live("change", function() {
     
-    var data = editor.getCanvas($("#toolbar").data('id'));
+    var data = editor.getCanvas($(".active").data('ref'));
     if($(this).is(":checked")) {
       $("#advanced_bg").addClass("activated");
+      $(".active").addClass("removed_bg");
       data.img.onload = function() { editor.removeColour(data.ctx,data.img); }
       data.object.media.removed = "true";
     } else {
       $("#advanced_bg").removeClass("activated");
+      $(".active").removeClass("removed_bg");
       data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
       data.object.media.removed = null;
     }
@@ -39,14 +83,7 @@ $(function() {
   
   $("#advanced_bg").live("click", function() {
     if($(this).hasClass("activated")) {
-      if($(this).hasClass("active")) {
-        $(this).removeClass("active");
-        editor.closeOverlay();
-        $(".bg_advanced").fadeOut(300);
-      } else {
-        $(this).addClass("active");
-        editor.advancedBG(editor.getCanvas($("#toolbar").data('id')));
-      }
+      editor.advancedBG(editor.getCanvas($(".active").data('ref')));
     }
     return false;
   });
@@ -69,10 +106,27 @@ $(function() {
     }
   });
   
+  $(".cancel").live("click", function() {
+    var toolbar = $(this).closest(".toolbar");
+    toolbar.animate({
+      top: -100
+    },300, function() {
+      $("#toolbar").css("top",-100).show().animate({
+        top: 0
+      },300);
+    });
+    editor.closeOverlay();
+    
+    return false;
+  });
+  
   $(".overlay_close").live("click", function() {
     editor.closeOverlay();
     return false;
   });
+  
+  //document.getElementById('canvas_scale').addEventListener('gesturechange', editor.zoom, false);
+  //document.getElementById('canvas_scale').addEventListener('touch', function() { console.log('test'); }, false);
   
 });
 
@@ -82,6 +136,16 @@ $(window).resize(function() {
     height: $(window).height()
   };
 });
+
+/*
+window.onorientationchange = function() {
+  var o = window.orientation;
+  
+  if (o != 90 && o != -90) {
+    document.getElementsByTagName("body")[0].style.webkitTransform = "rotate(-90deg)";
+  }
+}
+*/
 
 var editor = {
   defaults: {
@@ -93,6 +157,16 @@ var editor = {
     sizing: false,
     rotating: 0
   },
+  items: {
+    order: []
+  },
+  id: {
+    count: 0,
+    get: function() {
+      editor.id.count++; 
+      return editor.id.count;
+    }
+  },
   window: {
     width: $(window).width(),
     height: $(window).height()
@@ -101,19 +175,30 @@ var editor = {
     
   },
   closeOverlay: function() {
-    $(".overlay,.overlay_close,.checkerboard").fadeOut(300, function() {
-      $(".overlay,.overlay_close,.checkerboard").remove();
+    $(".overlay,.overlay_close").fadeOut(300, function() {
+      $(".overlay,.overlay_close").remove();
     });
+    $(".checkerboard").remove();
     var object = $(".overlay_object").data('position');
     $(".overlay_object").animate({
       width: object['width'],
       height: object['height'],
       top: object['top'],
       left: object['left'],
-      margin: 0
+      marginTop: 0,
+      marginLeft: 0,
+      zIndex: $(".overlay_object").data('z')
     },300,function() {
       $(this).css("margin","");
     }).removeClass("overlay_object");
+    
+    $(".toolbar:not(#toolbar)").animate({
+      top: -100
+    }, 300, function() {
+      $("#toolbar").animate({
+        top: 0
+      },300);
+    });
   },
   overlayCanvas: function(object) {
     $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { 
@@ -133,7 +218,8 @@ var editor = {
       top: editor.window.height/2,
       left: editor.window.width/2,
       marginTop: -200,
-      marginLeft: -200
+      marginLeft: -200,
+      zIndex: 601
     },300).addClass("overlay_object");
     
     $("#toolbar").animate({
@@ -145,13 +231,14 @@ var editor = {
     });
   },
   getCanvas: function(id) {
+    var object = $("#item_"+id).data('object');
     var data = {
       canvas: document.getElementById('item_'+id),
       img: new Image()
     }
     data.ctx = data.canvas.getContext('2d');
     data.object = $(data.canvas).data('object');
-    data.img.src = editor.imgUrl(id);
+    data.img.src = editor.imgUrl(object.id);
     return data;
   },
   imgUrl: function(id) {
@@ -187,7 +274,11 @@ var editor = {
   getAlpha: function(diff,step) {
     return diff*step;
   },
-  addObject: function(object) {
+  addObject: function(object,i) {
+    
+    var refid = editor.id.get();
+    editor.items.order.push({'id': object.id, 'index': i});
+    
     var base = {
       x: editor.window.width/2,
       y: editor.window.height/2
@@ -198,8 +289,7 @@ var editor = {
         ctx = canvas.getContext('2d'),
         src = '/images/items/'+object.id+'_400x400.jpg';
         
-    canvas.setAttribute('id','item_'+object.id);
-    $(canvas).data('object',object);
+    canvas.setAttribute('id','item_'+refid);
   
     img.onload = function() {
       canvas.width = img.width;
@@ -219,13 +309,13 @@ var editor = {
         top: base.y + object.y*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         left: base.x + object.x*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         webkitTransform: "rotate("+object.media.rotation+"deg)"
-      });
+      }).data('object',object).css('z-index',i).data('z',i).data('ref',refid);
       
-      document.getElementById('canvas').appendChild(canvas);
+      document.getElementById("canvas_scale").appendChild(canvas);
       
       // Add touch events
-      editor.addTouchListeners(object.id);
-      editor.addClickListeners(object.id);
+      editor.addTouchListeners(refid);
+      editor.addClickListeners(refid);
     }
     
     img.src = src;
@@ -261,6 +351,9 @@ var editor = {
       for(var i = 0; i < data.length; i++) {
         var item = data[i].item;
         if(item.id == object.id) {
+          $("#item_details").animate({
+            bottom: 0
+          },300);
           $("#active_item_name").text(item.name);
           $("#active_item_desc").text(item.description);
           $("#active_item_img").attr("src",editor.imgUrl(item.id));
@@ -280,6 +373,8 @@ var editor = {
   },
   initToolbar: function(object) {
     $("#toolbar").fadeIn(300).data("id",object.id);
+    $("#rotation").val(Math.round(object.media.rotation)+"°");
+    $("#scale").val(Math.round(object.media.scale*100)+"%");
     if(object.media.removed == "true") {
       $("#removebg").attr("checked","checked");
     } else {
@@ -316,15 +411,37 @@ var editor = {
   },
   gesturechange: function(event) {
     if($(this).hasClass("active")) {
+      var data = $(".active").data("object");
       if(editor.events.sizing){
-        $(this).width(Math.min(editor.events.sizing[0] * event.scale, 600) + "px")
-          .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px");
+        
+        // Sizing
+        if(data.media.scaleLock == 0) {
+          var width1 = $(this).outerWidth(),
+              height1 = $(this).outerHeight();
+              
+          $(this).width(Math.min(editor.events.sizing[0] * event.scale, 600) + "px")
+            .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px");
           
-        $(this).css({
-          top: this.style.top-($(this).height()-editor.events.sizing[1])/2,
-          left: this.style.left-($(this).width()-editor.events.sizing[0])/2,
-        });
-        this.style.webkitTransform = "rotate(" + ((editor.events.rotating + event.rotation) % 360) + "deg)";
+          // $1m to whoever can solve this. Cole pays.
+          /*
+          $(this).css({
+            top: parseInt(this.style.top,10)-($(this).outerHeight()-height1)/2,
+            left: parseInt(this.style.left,10)-($(this).outerWidth()-width1)/2,
+          });
+          */
+
+          $("#scale").val(Math.round(event.scale*100)+"%");
+          data.media.hScale = event.scale*100;
+          data.media.vScale = event.scale*100;
+        }
+        
+        // Rotating
+        if(data.media.angleLock == 0) {
+          this.style.webkitTransform = "rotate(" + ((editor.events.rotating + event.rotation) % 360) + "deg)";
+          $("#rotation").val(Math.round(editor.events.rotating + event.rotation)+"°");
+          
+          data.media.rotation = editor.events.rotating + event.rotation;
+        }
       }
     }
   },
@@ -333,6 +450,10 @@ var editor = {
       editor.events.sizing = false;
       editor.events.rotating = (editor.events.rotating + event.rotation) % 360;
     }
+  },
+  zoom: function(e) {
+    $(this).css("-webkit-transform","scale("+event.scale+")");
+    e.preventDefault();
   }
 };
 
