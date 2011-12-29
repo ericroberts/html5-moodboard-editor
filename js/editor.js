@@ -29,19 +29,50 @@ $(function() {
   });
   
   $(".depth").live("click", function() {
-    var curr = $(".active").data('z');
+    var curr = parseInt($(".active").data('z'),10);
+    var max = Math.max.apply(Math,editor.items.indexes);
     
     if($(this).hasClass("front")) {      
-      $("canvas").each(function() {
-        if($(this).data('z') == curr+1) {
-          console.log('found it');
-          $(this).data('z',curr);
-          $(this).css("z-index",curr);
+      if(curr != max) {
+        $("canvas:not(.active)").each(function() {
+          if($(this).data('z') == curr+1) {
+            $(this).data('z',curr);
+            $(this).css("z-index",curr);
+          }
+        });
+        $(".active").css("z-index",curr+1).data('z',curr+1);
+      }
+    }
+    if($(this).hasClass("tofront")) {
+      $("canvas:not(.active)").each(function() {
+        var z = parseInt($(this).data('z'),10);
+        if (z > curr) {
+          $(this).css('z-index',z-1).data('z',z-1);
         }
       });
-      $(".active").css("z-index",curr+1);
-      $(".active").data('z',curr+1);
+      $(".active").data('z',max).css("z-index",max);
     }
+    if($(this).hasClass("back")) {
+      if(curr != 0) {
+        $("canvas:not(.active)").each(function() {
+          if($(this).data('z') == curr-1) {
+            $(this).data('z',curr);
+            $(this).css("z-index",curr);
+          }
+        });
+        $(".active").css("z-index",curr-1).data('z',curr-1);
+      }
+    }
+    if($(this).hasClass("toback")) {
+      $("canvas:not(.active)").each(function() {
+        var z = parseInt($(this).data('z'),10);
+        if(z < curr) {
+          $(this).css('z-index',z+1).data('z',z+1);
+        }
+      });
+      $(".active").css("z-index",0).data('z',0);
+    }
+    return false;
   });
   
   $("#lock_rotation").live("change", function() {
@@ -125,9 +156,6 @@ $(function() {
     return false;
   });
   
-  //document.getElementById('canvas_scale').addEventListener('gesturechange', editor.zoom, false);
-  //document.getElementById('canvas_scale').addEventListener('touch', function() { console.log('test'); }, false);
-  
 });
 
 $(window).resize(function() {
@@ -158,7 +186,8 @@ var editor = {
     rotating: 0
   },
   items: {
-    order: []
+    order: [],
+    indexes: []
   },
   id: {
     count: 0,
@@ -278,6 +307,7 @@ var editor = {
     
     var refid = editor.id.get();
     editor.items.order.push({'id': object.id, 'index': i});
+    editor.items.indexes.push(i);
     
     var base = {
       x: editor.window.width/2,
