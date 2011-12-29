@@ -28,6 +28,22 @@ $(function() {
     });
   });
   
+  $(".flip").live("click", function() {
+    var data = editor.getCanvas($(".active").data('ref'));
+    data.ctx.translate(data.img.width, 0);
+    data.ctx.scale(-1,1);
+    data.ctx.drawImage(data.img, 0, 0);
+    return false;
+  });
+  
+  $(".flop").live("click", function() {
+    var data = editor.getCanvas($(".active").data('ref'));
+    data.ctx.translate(0,data.img.height);
+    data.ctx.scale(1,-1);
+    data.ctx.drawImage(data.img, 0, 0);
+    return false;
+  });
+  
   $(".depth").live("click", function() {
     var curr = parseInt($(".active").data('z'),10);
     var max = Math.max.apply(Math,editor.items.indexes);
@@ -113,6 +129,8 @@ $(function() {
   });
   
   $("#advanced_bg").live("click", function() {
+    var data = editor.getCanvas($(".active").data('ref'));
+    data.ctx.save();
     if($(this).hasClass("activated")) {
       editor.advancedBG(editor.getCanvas($(".active").data('ref')));
     }
@@ -121,7 +139,7 @@ $(function() {
   
   $("#bg_tolerance").change(function() {
     if($("#removebg").is(":checked")) {
-      var data = editor.getCanvas($("#toolbar").data('id'));
+      var data = editor.getCanvas($(".active").data('ref'));
       data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
       var f = $("#bg_feather").val() ? parseInt($("#bg_feather").val(),10) : null;
       editor.removeColour(data.ctx,data.img,parseInt($("#bg_tolerance").val(),10),f);
@@ -138,6 +156,8 @@ $(function() {
   });
   
   $(".cancel").live("click", function() {
+    var data = editor.getCanvas($(".active").data('ref'));
+    data.ctx.restore();
     var toolbar = $(this).closest(".toolbar");
     toolbar.animate({
       top: -100
