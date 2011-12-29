@@ -28,6 +28,23 @@ $(function() {
     });
   });
   
+  $(".duplicate").live("click", function() {
+    var data = $(".active").data("object");
+    var newobj = $.extend({},data);
+    newobj.x = newobj.x+25;
+    newobj.y = newobj.y+25;
+    
+    editor.addObject(newobj,Math.max.apply(Math,editor.items.indexes)+1);
+  });
+  
+  $(".remove").live("click", function() {
+    if(confirm("Are you sure you want to remove?")) {
+      $(".active").fadeOut(300, function() {
+        $(".active").remove();
+      });
+    }
+  });
+  
   $(".flip").live("click", function() {
     var data = editor.getCanvas($(".active").data('ref'));
     data.ctx.translate(data.img.width, 0);
