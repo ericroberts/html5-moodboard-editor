@@ -512,6 +512,7 @@ var editor = {
   gesture: function(event) {
     if($(this).hasClass("active")) {
       editor.events.sizing = [parseInt($(this).width()), parseInt($(this).height())];
+      editor.events.rotating = $(this).data('object').media.rotation;
     }
   },
   gesturechange: function(event) {
@@ -545,6 +546,13 @@ var editor = {
         // Rotating
         if(data.media.angleLock == 0) {
           var rotate = (editor.events.rotating + event.rotation);
+          
+          if(rotate < 0) {
+            rotate = 360 + rotate;
+          }
+          if(rotate > 360) {
+            rotate = rotate - 360;
+          }
           var locks = [0,45,90,135,180,225,270,315,360];
           
           for(i = 0; i < locks.length; i++) {
