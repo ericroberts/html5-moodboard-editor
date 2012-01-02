@@ -49,18 +49,54 @@ $(function() {
   });
   
   $(".flip").live("click", function() {
+    var object = $(".active").data("object");
+    
+    if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
+    else { axis = {x: 0, y: 0} }
+    
+    if(axis.y == 180) { axis.y = 0; } 
+    else { axis.y = 180; }
+    
+    $(".active").css({
+      webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg) translate3d(0, 0, 0)",
+      webkitTransition: "1s"
+    }).data("rotate",{x: axis.x, y: axis.y});
+    
+    setTimeout(function() {
+      $(".active").css("-webkit-transition-duration","0s");
+    },100);
+    /*
     var data = editor.getCanvas($(".active").data('ref'));
     data.ctx.translate(data.img.width, 0);
     data.ctx.scale(-1,1);
     data.ctx.drawImage(data.img, 0, 0);
+    */
     return false;
   });
   
   $(".flop").live("click", function() {
+    var object = $(".active").data("object");
+    
+    if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
+    else { axis = {x: 0, y: 0} }
+    
+    if(axis.x == 180) { axis.x = 0; } 
+    else { axis.x = 180; }
+    
+    $(".active").css({
+      webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg)",
+      webkitTransition: "1s"
+    }).data("rotate",{x: axis.x, y: axis.y}).css("webkit-transition",0);
+    
+    setTimeout(function() {
+      $(".active").css("-webkit-transition-duration","0s");
+    },100);
+    /*
     var data = editor.getCanvas($(".active").data('ref'));
     data.ctx.translate(0,data.img.height);
     data.ctx.scale(1,-1);
     data.ctx.drawImage(data.img, 0, 0);
+    */
     return false;
   });
   
@@ -508,10 +544,20 @@ var editor = {
         
         // Rotating
         if(data.media.angleLock == 0) {
-          this.style.webkitTransform = "rotate(" + ((editor.events.rotating + event.rotation) % 360) + "deg)";
-          $("#rotation").val(Math.round(editor.events.rotating + event.rotation)+"°");
+          var rotate = (editor.events.rotating + event.rotation);
+          var locks = [0,45,90,135,180,225,270,315,360];
           
-          data.media.rotation = editor.events.rotating + event.rotation;
+          for(i = 0; i < locks.length; i++) {
+            if(rotate >= (locks[i]-5) && rotate <= (locks[i]+5)) {
+              rotate = locks[i];
+            }
+          }
+          
+          
+          this.style.webkitTransform = "rotate(" + (rotate) + "deg)";
+          $("#rotation").val(Math.round(rotate)+"°");
+          
+          data.media.rotation = rotate;
         }
       }
     }
@@ -519,7 +565,7 @@ var editor = {
   gestureend: function(event) {
     if($(this).hasClass("active")) {
       editor.events.sizing = false;
-      editor.events.rotating = (editor.events.rotating + event.rotation) % 360;
+      editor.events.rotating = (editor.events.rotating + event.rotation);
     }
   },
   zoom: function(e) {
