@@ -26,6 +26,11 @@ $(function() {
     $(".active").css({
       webkitTransform: "rotate("+deg+"deg)"
     });
+    
+    var object = $(".active").data('object');
+    object.media.rotation = $(this).val();
+    
+    console.log($(".active").data('object').media.rotation);
   });
   
   $(".duplicate").live("click", function() {
@@ -165,6 +170,12 @@ $(function() {
     }
   });
   
+  $(".crop").live("click", function() {
+    var data = editor.getCanvas($(".active").data('ref'));
+    editor.openCropTool(data);
+    return false;
+  });
+  
   $("#removebg").live("change", function() {
     
     var data = editor.getCanvas($(".active").data('ref'));
@@ -284,6 +295,13 @@ var editor = {
     });
     $(".checkerboard").remove();
     var object = $(".overlay_object").data('position');
+    var rotate = $(".overlay_object").data('rotate');
+    if(!rotate) {
+      rotate = { x: 0, y: 0 }
+    }
+    var rotation = $(".overlay_object").data('object').media.rotation;
+    console.log(rotation);
+    
     $(".overlay_object").animate({
       width: object['width'],
       height: object['height'],
@@ -294,7 +312,7 @@ var editor = {
       zIndex: $(".overlay_object").data('z')
     },300,function() {
       $(this).css("margin","");
-    }).removeClass("overlay_object");
+    }).css("-webkit-transform","rotate("+rotation+"deg)").removeClass("overlay_object");
     
     $(".toolbar:not(#toolbar)").animate({
       top: -100
@@ -309,22 +327,35 @@ var editor = {
       $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); 
       $("body").prepend($("<div class='checkerboard'></div>").css({
         top: editor.window.height/2,
-        left: editor.window.width/2
+        left: editor.window.width/2,
       }).hide().fadeIn(300));
     }));
-  },
-  advancedBG: function(object) {
-    editor.overlayCanvas(object);
+    
     var el = $(object.canvas);
-    $(object.canvas).data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
+    
+    el.data("position",{ left: parseInt(el.css("left"),10), top: parseInt(el.css("top"),10), width: el.width(), height: el.height() }).animate({
       width: 400,
       height: 400,
       top: editor.window.height/2,
       left: editor.window.width/2,
       marginTop: -200,
       marginLeft: -200,
-      zIndex: 601
-    },300).addClass("overlay_object");
+      zIndex: 601,
+    },300).css("-webkit-transform","rotate(0deg)").addClass("overlay_object");
+  },
+  openCropTool: function(object) {
+    editor.overlayCanvas(object);
+    
+    $("#toolbar").animate({
+      top: -100
+    },300, function() {
+      $("#crop").css("top", -100).show().animate({
+        top: 0
+      },300);
+    });
+  },
+  advancedBG: function(object) {
+    editor.overlayCanvas(object);
     
     $("#toolbar").animate({
       top: -100
@@ -537,10 +568,6 @@ var editor = {
           */
 
           $("#scale").val(Math.round(event.scale*100)+"%");
-          //data.media.hScale = event.scale*100;
-          //data.media.vScale = event.scale*100;
-          
-          //data.media.scale = data.media.scale+event.scale;
         }
         
         // Rotating
