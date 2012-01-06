@@ -29,9 +29,15 @@ $(function() {
     
     var object = $(".active").data('object');
     object.media.rotation = $(this).val();
-    
-    console.log($(".active").data('object').media.rotation);
   });
+  
+  /*
+  $(":not(canvas,.toolbar)").click(function(e) {
+    console.log(e);
+    $(".active","#canvas_scale").removeClass("active");
+    editor.closeToolbar();
+  });
+  */
   
   $(".duplicate").live("click", function() {
     var data = $(".active").data("object");
@@ -39,7 +45,7 @@ $(function() {
     newobj.x = newobj.x+25;
     newobj.y = newobj.y+25;
     
-    editor.addObject(newobj,Math.max.apply(Math,editor.items.indexes)+1);
+    editor.addObject(newobj,Math.max.apply(Math,editor.items.indexes)+1,true);
     
     return false;
   });
@@ -54,6 +60,7 @@ $(function() {
   });
   
   $(".flip").live("click", function() {
+    /*
     var object = $(".active").data("object");
     
     if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
@@ -70,16 +77,20 @@ $(function() {
     setTimeout(function() {
       $(".active").css("-webkit-transition-duration","0s");
     },100);
-    /*
-    var data = editor.getCanvas($(".active").data('ref'));
-    data.ctx.translate(data.img.width, 0);
-    data.ctx.scale(-1,1);
-    data.ctx.drawImage(data.img, 0, 0);
     */
+    $(".active").fadeTo(250,0.5, function() {
+      var data = editor.getCanvas($(".active").data('ref'));
+      data.ctx.translate(data.img.width, 0);
+      data.ctx.scale(-1,1);
+      data.ctx.drawImage(data.img, 0, 0);
+      
+      $(".active").fadeTo(0.5,250);
+    });
     return false;
   });
   
   $(".flop").live("click", function() {
+    /*
     var object = $(".active").data("object");
     
     if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
@@ -96,12 +107,16 @@ $(function() {
     setTimeout(function() {
       $(".active").css("-webkit-transition-duration","0s");
     },100);
-    /*
-    var data = editor.getCanvas($(".active").data('ref'));
-    data.ctx.translate(0,data.img.height);
-    data.ctx.scale(1,-1);
-    data.ctx.drawImage(data.img, 0, 0);
     */
+    
+    $(".active").fadeTo(250,0.5, function() {
+      var data = editor.getCanvas($(".active").data('ref'));
+      data.ctx.translate(0,data.img.height);
+      data.ctx.scale(1,-1);
+      data.ctx.drawImage(data.img, 0, 0);
+      
+      $(".active").fadeTo(0.5,250);
+    });
     return false;
   });
   
@@ -171,14 +186,13 @@ $(function() {
   });
   
   $(".crop").live("click", function() {
-    var data = editor.getCanvas($(".active").data('ref'));
+    var data = editor.getCanvas($(".active","#canvas").data('ref'));
     editor.openCropTool(data);
     return false;
   });
   
   $("#removebg").live("change", function() {
-    
-    var data = editor.getCanvas($(".active").data('ref'));
+    var data = editor.getCanvas($(".active","#canvas").data('ref'));
     if($(this).is(":checked")) {
       $("#advanced_bg").addClass("activated");
       $(".active").addClass("removed_bg");
@@ -353,6 +367,59 @@ var editor = {
         top: 0
       },300);
     });
+    
+    theSelection = new editor.crop.selection(50,50,300,300);
+    
+    editor.crop.drawScene(object,theSelection);
+  },
+  crop: {
+    selection: function(x,y,w,h) {
+      this.x = x; // initial positions
+      this.y = y;
+      this.w = w; // and size
+      this.h = h;
+
+      this.px = x; // extra variables to dragging calculations
+      this.py = y;
+
+      this.csize = 6; // resize cubes size
+      this.csizeh = 10; // resize cubes size (on hover)
+
+      this.bHow = [false, false, false, false]; // hover statuses
+      this.iCSize = [this.csize, this.csize, this.csize, this.csize]; // resize cubes sizes
+      this.bDrag = [false, false, false, false]; // drag statuses
+      this.bDragAll = false; // drag whole selection
+    },
+    drawScene: function(object,selection) { // main drawScene function
+      object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height); // clear canvas
+
+      // draw source image
+      object.ctx.drawImage(object.img, 0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+
+      // and make it darker
+      object.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      object.ctx.fillRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+
+      // draw selection
+      editor.crop.drawSelection(object,selection);
+    },
+    drawSelection: function(object,sel) {
+      object.ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      object.ctx.lineWidth = 2;
+      object.ctx.strokeRect(sel.x, sel.y, sel.w, sel.h);
+
+      // draw part of original image
+      if (sel.w > 0 && sel.h > 0) {
+        object.ctx.drawImage(object.img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
+      }
+
+      // draw resize cubes
+      object.ctx.fillStyle = '#fff';
+      object.ctx.fillRect(sel.x - sel.iCSize[0], sel.y - sel.iCSize[0], sel.iCSize[0] * 2, sel.iCSize[0] * 2);
+      object.ctx.fillRect(sel.x + sel.w - sel.iCSize[1], sel.y - sel.iCSize[1], sel.iCSize[1] * 2, sel.iCSize[1] * 2);
+      object.ctx.fillRect(sel.x + sel.w - sel.iCSize[2], sel.y + sel.h - sel.iCSize[2], sel.iCSize[2] * 2, sel.iCSize[2] * 2);
+      object.ctx.fillRect(sel.x - sel.iCSize[3], sel.y + sel.h - sel.iCSize[3], sel.iCSize[3] * 2, sel.iCSize[3] * 2);
+    },
   },
   advancedBG: function(object) {
     editor.overlayCanvas(object);
@@ -409,7 +476,7 @@ var editor = {
   getAlpha: function(diff,step) {
     return diff*step;
   },
-  addObject: function(object,i) {
+  addObject: function(object,i,active) {
     
     var refid = editor.id.get();
     editor.items.order.push({'id': object.id, 'index': i});
@@ -452,9 +519,15 @@ var editor = {
       // Add touch events
       editor.addTouchListeners(refid);
       editor.addClickListeners(refid);
+      
+      if(active == true) {
+        $(canvas).click();
+      }
     }
     
     img.src = src;
+    
+    return "#item_"+refid;
   },
   addTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
@@ -477,9 +550,12 @@ var editor = {
       editor.activateObject($(this));
     });
   },
+  getVendorURL: function(url) {
+    return url.match(/:\/\/(.[^/]+)/)[1];
+  },
   activateObject: function(canvas) {
     var object = canvas.data('object');
-    $(".active").removeClass("active");
+    $(".active","#canvas_scale").removeClass("active");
     canvas.addClass("active");
     editor.initToolbar(canvas.data('object'));
     
@@ -495,13 +571,9 @@ var editor = {
           $("#active_item_img").attr("src",editor.imgUrl(item.id));
           if(item.store_url) {
             $("#active_item_link").attr("href",item.store_url);
+            $("#active_item_brand").attr("href","http://"+editor.getVendorURL(item.store_url));
           } else {
             $("#active_item_link").hide();
-          }
-          if(item.vendor_url) {
-            $("#active_item_brand").attr("href",item.vendor_url);
-          } else {
-            $("#active_item_brand").hide();
           }
         }
       }
@@ -516,6 +588,9 @@ var editor = {
     } else {
       $("#removebg").removeAttr("checked");
     }
+  },
+  closeToolbar: function() {
+    $("#toolbar").fadeOut(300);
   },
   touch: function(event) {
     editor.activateObject($(this));
@@ -553,33 +628,22 @@ var editor = {
         
         // Sizing
         if(data.media.scaleLock == 0) {
-          var width1 = $(this).outerWidth(),
-              height1 = $(this).outerHeight();
               
           $(this).width(Math.min(editor.events.sizing[0] * event.scale, 600) + "px")
             .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px");
-          
-          // $1m to whoever can solve this. Cole pays.
-          /*
-          $(this).css({
-            top: parseInt(this.style.top,10)-($(this).outerHeight()-height1)/2,
-            left: parseInt(this.style.left,10)-($(this).outerWidth()-width1)/2,
-          });
-          */
+  
+          var scale = $(this).width()/(400*editor.window.zoom);
+          $("#scale").val(Math.round(scale*100)+"%");
+          data.media.scale = scale;
 
-          $("#scale").val(Math.round(event.scale*100)+"%");
         }
         
         // Rotating
         if(data.media.angleLock == 0) {
           var rotate = (editor.events.rotating + event.rotation);
+          if(rotate < 0) { rotate = 360 + rotate; }
+          if(rotate > 360) { rotate = rotate - 360; }
           
-          if(rotate < 0) {
-            rotate = 360 + rotate;
-          }
-          if(rotate > 360) {
-            rotate = rotate - 360;
-          }
           var locks = [0,45,90,135,180,225,270,315,360];
           
           for(i = 0; i < locks.length; i++) {
@@ -588,10 +652,13 @@ var editor = {
             }
           }
           
+          var rotatexy = $(this).data("rotate");
+          if(!rotatexy) {
+            rotatexy = { x: 0, y: 0 }
+          }
           
-          this.style.webkitTransform = "rotate(" + (rotate) + "deg)";
+          this.style.webkitTransform = "rotate(" + (rotate) + "deg) rotateX("+rotatexy.x+") rotateY("+rotatexy.y+")";
           $("#rotation").val(Math.round(rotate)+"°");
-          
           data.media.rotation = rotate;
         }
       }

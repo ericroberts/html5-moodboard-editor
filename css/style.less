@@ -13,8 +13,6 @@ body, button, input, select, textarea { font-family: sans-serif; color: #222; }
 ::selection { background: #fe57a1; color: #fff; text-shadow: none; }
 
 a { color: #00e; }
-a:visited { color: #551a8b; }
-a:hover { color: #06e; }
 a:focus { outline: thin dotted; }
 a:hover, a:active { outline: 0; }
 
@@ -102,7 +100,7 @@ a {
   position: absolute;
   top: 50%;
   left: 50%;
-  margin: -205px 0 0 188px;
+  margin: -210px 0 0 188px;
   width: 26px;
   height: 26px;
   text-indent: -100000px;
@@ -213,6 +211,24 @@ canvas {
   }
 }
 
+.button {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 0 0 4px 0;
+  font-size: 9pt;
+  border: 1px solid rgba(0,0,0,0.4);
+  color: #222;
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.1);
+  .gradient(rgba(0,0,0,0.1),rgba(0,0,0,0.2));
+  .double-box-shadow(inset 0 0 5px rgba(255,255,255,0.2), 0 1px 0 rgba(255,255,255,0.1));
+  .border-radius(5px);
+  
+  &:active, &.active {
+    .gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.1));
+    .double-box-shadow(inset 0 0 3px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.1));
+  }
+}
+
 #items {
   width: 300px;
   height: 300px;
@@ -221,7 +237,6 @@ canvas {
   border-width: 3px 0 3px 3px;
   position: fixed;
   right: 0;
-  display: none;
   top: 100px;
   z-index: 500;
   .box-shadow(0 1px 2px rgba(0,0,0,0.5));
