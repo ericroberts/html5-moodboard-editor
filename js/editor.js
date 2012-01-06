@@ -23,11 +23,11 @@ $(function() {
   
   $("#rotation").live("keyup", function() {
     var deg = $(this).val();
-    $(".active").css({
+    $(".active","#canvas").css({
       webkitTransform: "rotate("+deg+"deg)"
     });
     
-    var object = $(".active").data('object');
+    var object = $(".active","#canvas").data('object');
     object.media.rotation = $(this).val();
   });
   
@@ -40,7 +40,7 @@ $(function() {
   */
   
   $(".duplicate").live("click", function() {
-    var data = $(".active").data("object");
+    var data = $(".active","#canvas").data("object");
     var newobj = $.extend({},data);
     newobj.x = newobj.x+25;
     newobj.y = newobj.y+25;
@@ -52,8 +52,8 @@ $(function() {
   
   $(".remove").live("click", function() {
     if(confirm("Are you sure you want to remove?")) {
-      $(".active").fadeOut(300, function() {
-        $(".active").remove();
+      $(".active","#canvas").fadeOut(300, function() {
+        $(".active","#canvas").remove();
       });
     }
     return false;
@@ -61,67 +61,67 @@ $(function() {
   
   $(".flip").live("click", function() {
     /*
-    var object = $(".active").data("object");
+    var object = $(".active","#canvas").data("object");
     
-    if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
+    if($(".active","#canvas").data("rotate")) { axis = $(".active","#canvas").data("rotate"); } 
     else { axis = {x: 0, y: 0} }
     
     if(axis.y == 180) { axis.y = 0; } 
     else { axis.y = 180; }
     
-    $(".active").css({
+    $(".active","#canvas").css({
       webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg) translate3d(0, 0, 0)",
       webkitTransition: "1s"
     }).data("rotate",{x: axis.x, y: axis.y});
     
     setTimeout(function() {
-      $(".active").css("-webkit-transition-duration","0s");
+      $(".active","#canvas").css("-webkit-transition-duration","0s");
     },100);
     */
-    $(".active").fadeTo(250,0.5, function() {
-      var data = editor.getCanvas($(".active").data('ref'));
+    $(".active","#canvas").fadeTo(250,0.5, function() {
+      var data = editor.getCanvas($(".active","#canvas").data('ref'));
       data.ctx.translate(data.img.width, 0);
       data.ctx.scale(-1,1);
       data.ctx.drawImage(data.img, 0, 0);
       
-      $(".active").fadeTo(0.5,250);
+      $(".active","#canvas").fadeTo(0.5,250);
     });
     return false;
   });
   
   $(".flop").live("click", function() {
     /*
-    var object = $(".active").data("object");
+    var object = $(".active","#canvas").data("object");
     
-    if($(".active").data("rotate")) { axis = $(".active").data("rotate"); } 
+    if($(".active","#canvas").data("rotate")) { axis = $(".active","#canvas").data("rotate"); } 
     else { axis = {x: 0, y: 0} }
     
     if(axis.x == 180) { axis.x = 0; } 
     else { axis.x = 180; }
     
-    $(".active").css({
+    $(".active","#canvas").css({
       webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg)",
       webkitTransition: "1s"
     }).data("rotate",{x: axis.x, y: axis.y}).css("webkit-transition",0);
     
     setTimeout(function() {
-      $(".active").css("-webkit-transition-duration","0s");
+      $(".active","#canvas").css("-webkit-transition-duration","0s");
     },100);
     */
     
-    $(".active").fadeTo(250,0.5, function() {
-      var data = editor.getCanvas($(".active").data('ref'));
+    $(".active","#canvas").fadeTo(250,0.5, function() {
+      var data = editor.getCanvas($(".active","#canvas").data('ref'));
       data.ctx.translate(0,data.img.height);
       data.ctx.scale(1,-1);
       data.ctx.drawImage(data.img, 0, 0);
       
-      $(".active").fadeTo(0.5,250);
+      $(".active","#canvas").fadeTo(0.5,250);
     });
     return false;
   });
   
   $(".depth").live("click", function() {
-    var curr = parseInt($(".active").data('z'),10);
+    var curr = parseInt($(".active","#canvas").data('z'),10);
     var max = Math.max.apply(Math,editor.items.indexes);
     
     if($(this).hasClass("front")) {      
@@ -132,7 +132,7 @@ $(function() {
             $(this).css("z-index",curr);
           }
         });
-        $(".active").css("z-index",curr+1).data('z',curr+1);
+        $(".active","#canvas").css("z-index",curr+1).data('z',curr+1);
       }
     }
     if($(this).hasClass("tofront")) {
@@ -142,7 +142,7 @@ $(function() {
           $(this).css('z-index',z-1).data('z',z-1);
         }
       });
-      $(".active").data('z',max).css("z-index",max);
+      $(".active","#canvas").data('z',max).css("z-index",max);
     }
     if($(this).hasClass("back")) {
       if(curr != 0) {
@@ -152,7 +152,7 @@ $(function() {
             $(this).css("z-index",curr);
           }
         });
-        $(".active").css("z-index",curr-1).data('z',curr-1);
+        $(".active","#canvas").css("z-index",curr-1).data('z',curr-1);
       }
     }
     if($(this).hasClass("toback")) {
@@ -162,13 +162,13 @@ $(function() {
           $(this).css('z-index',z+1).data('z',z+1);
         }
       });
-      $(".active").css("z-index",0).data('z',0);
+      $(".active","#canvas").css("z-index",0).data('z',0);
     }
     return false;
   });
   
   $("#lock_rotation").live("change", function() {
-    var data = $(".active").data("object");
+    var data = $(".active","#canvas").data("object");
     if($(this).is(":checked")) {
       data.media.angleLock = 1;
     } else {
@@ -177,7 +177,7 @@ $(function() {
   });
   
   $("#lock_scale").live("change", function() {
-    var data = $(".active").data("object");
+    var data = $(".active","#canvas").data("object");
     if($(this).is(":checked")) {
       data.media.scaleLock = 1;
     } else {
@@ -195,12 +195,12 @@ $(function() {
     var data = editor.getCanvas($(".active","#canvas").data('ref'));
     if($(this).is(":checked")) {
       $("#advanced_bg").addClass("activated");
-      $(".active").addClass("removed_bg");
+      $(".active","#canvas").addClass("removed_bg");
       data.img.onload = function() { editor.removeColour(data.ctx,data.img); }
       data.object.media.removed = "true";
     } else {
       $("#advanced_bg").removeClass("activated");
-      $(".active").removeClass("removed_bg");
+      $(".active","#canvas").removeClass("removed_bg");
       data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
       data.object.media.removed = null;
     }
@@ -210,17 +210,17 @@ $(function() {
   });
   
   $("#advanced_bg").live("click", function() {
-    var data = editor.getCanvas($(".active").data('ref'));
+    var data = editor.getCanvas($(".active","#canvas").data('ref'));
     data.ctx.save();
     if($(this).hasClass("activated")) {
-      editor.advancedBG(editor.getCanvas($(".active").data('ref')));
+      editor.advancedBG(editor.getCanvas($(".active","#canvas").data('ref')));
     }
     return false;
   });
   
   $("#bg_tolerance").change(function() {
     if($("#removebg").is(":checked")) {
-      var data = editor.getCanvas($(".active").data('ref'));
+      var data = editor.getCanvas($(".active","#canvas").data('ref'));
       data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
       var f = $("#bg_feather").val() ? parseInt($("#bg_feather").val(),10) : null;
       editor.removeColour(data.ctx,data.img,parseInt($("#bg_tolerance").val(),10),f);
@@ -623,7 +623,7 @@ var editor = {
   },
   gesturechange: function(event) {
     if($(this).hasClass("active")) {
-      var data = $(".active").data("object");
+      var data = $(".active","#canvas").data("object");
       if(editor.events.sizing){
         
         // Sizing
