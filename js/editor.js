@@ -6,6 +6,8 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
+  editor.crop.theSelection = editor.crop.selection(50,50,300,300);
+  
   $("#bg_tolerance").touchSlider({
     value: 5
   });
@@ -80,6 +82,7 @@ $(function() {
     */
     $(".active","#canvas").fadeTo(250,0.5, function() {
       var data = editor.getCanvas($(".active","#canvas").data('ref'));
+      console.log(data.img.width);
       data.ctx.translate(data.img.width, 0);
       data.ctx.scale(-1,1);
       data.ctx.drawImage(data.img, 0, 0);
@@ -248,6 +251,11 @@ $(function() {
     });
     editor.closeOverlay();
     
+  });
+  
+  $("#crop .save").live("click", function() {
+    editor.crop.save(editor.getCanvas($(".active","#canvas").data('ref')));
+    
     return false;
   });
   
@@ -314,7 +322,6 @@ var editor = {
       rotate = { x: 0, y: 0 }
     }
     var rotation = $(".overlay_object").data('object').media.rotation;
-    console.log(rotation);
     
     $(".overlay_object").animate({
       width: object['width'],
@@ -368,8 +375,29 @@ var editor = {
           top: 0
         },300);
       });
-
+      
+      editor.removeTouchListeners($(".active","#canvas").data('ref'));
       editor.crop.drawScene(object);
+    },
+    save: function(object) {
+      var sel = editor.crop.theSelection;
+      object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+      object.ctx.drawImage(object.img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
+      
+      object.canvas.removeEventListener('touchstart', editor.crop.touch.start, false);
+      object.canvas.removeEventListener('touchmove', editor.crop.touch.move, false);
+      object.canvas.removeEventListener('touchend', editor.crop.touch.end, false);
+      object.canvas.removeEventListener('mousedown', editor.crop.touch.start, false);
+      object.canvas.removeEventListener('mousemove', editor.crop.touch.move, false);
+      object.canvas.removeEventListener('mouseup', editor.crop.touch.end, false);
+      
+      var id = $(object.canvas).data('ref');
+      editor.addTouchListeners(id);
+      editor.addClickListeners(id);
+      
+      $(object.canvas).addClass("removed_bg").data('img',object.canvas.toDataURL());
+      
+      editor.crop.theSelection = new editor.crop.selection(50,50,300,300);
     },
     selection: function(x,y,w,h) {
       this.x = x; // initial positions
@@ -380,35 +408,34 @@ var editor = {
       this.px = x; // extra variables to dragging calculations
       this.py = y;
 
-      this.csize = 6; // resize cubes size
-      this.csizeh = 10; // resize cubes size (on hover)
+      this.csize = 20; // resize cubes size
+      this.csizeh = 30; // resize cubes size (on hover)
 
       this.bHow = [false, false, false, false]; // hover statuses
       this.iCSize = [this.csize, this.csize, this.csize, this.csize]; // resize cubes sizes
       this.bDrag = [false, false, false, false]; // drag statuses
       this.bDragAll = false; // drag whole selection
+      
+      return this;
     },
     theSelection: null,
     drawScene: function(object) { // main drawScene function
-      object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height); // clear canvas
+      object.img.onload = function() {
+        object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height); // clear canvas
 
-      // draw source image
-      object.ctx.drawImage(object.img, 0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+        // draw source image
+        object.ctx.drawImage(object.img, 0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
 
-      // and make it darker
-      object.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      object.ctx.fillRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+        // and make it darker
+        object.ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        object.ctx.fillRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
 
-      // draw selection
-      editor.crop.drawSelection(object);
+        // draw selection
+        editor.crop.drawSelection(object);
+      }
     },
     drawSelection: function(object) {
-      console.log(object);
       var sel = editor.crop.theSelection;
-      console.log(sel);
-      object.ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      object.ctx.lineWidth = 2;
-      object.ctx.strokeRect(sel.x, sel.y, sel.w, sel.h);
 
       // draw part of original image
       if (sel.w > 0 && sel.h > 0) {
@@ -416,25 +443,104 @@ var editor = {
       }
 
       // draw resize cubes
-      object.ctx.fillStyle = '#fff';
-      object.ctx.fillRect(sel.x - sel.iCSize[0], sel.y - sel.iCSize[0], sel.iCSize[0] * 2, sel.iCSize[0] * 2);
-      object.ctx.fillRect(sel.x + sel.w - sel.iCSize[1], sel.y - sel.iCSize[1], sel.iCSize[1] * 2, sel.iCSize[1] * 2);
-      object.ctx.fillRect(sel.x + sel.w - sel.iCSize[2], sel.y + sel.h - sel.iCSize[2], sel.iCSize[2] * 2, sel.iCSize[2] * 2);
-      object.ctx.fillRect(sel.x - sel.iCSize[3], sel.y + sel.h - sel.iCSize[3], sel.iCSize[3] * 2, sel.iCSize[3] * 2);
+      object.ctx.fillStyle = '#bf1c23';
       
+      // Top Left
+      object.ctx.beginPath();
+      object.ctx.moveTo(sel.x - 15, sel.y -15);
+      object.ctx.lineTo(sel.x + 25, sel.y - 15);
+      object.ctx.lineTo(sel.x + 25, sel.y - 1);
+      object.ctx.lineTo(sel.x - 1, sel.y - 1);
+      object.ctx.lineTo(sel.x - 1, sel.y + 25);
+      object.ctx.lineTo(sel.x - 15, sel.y + 25);
+      object.ctx.lineTo(sel.x - 15, sel.y - 15);
+      object.ctx.fill();
       
+      // Top Right
+      object.ctx.beginPath();
+      object.ctx.moveTo(sel.x + sel.w - 25, sel.y - 15);
+      object.ctx.lineTo(sel.x + sel.w + 15, sel.y - 15);
+      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + 25);
+      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + 25);
+      object.ctx.lineTo(sel.x + sel.w + 1, sel.y - 1);
+      object.ctx.lineTo(sel.x + sel.w - 25, sel.y - 1);
+      object.ctx.lineTo(sel.x + sel.w - 25, sel.y - 15);
+      object.ctx.fill();
+      
+      // Bottom Right
+      object.ctx.beginPath();
+      object.ctx.moveTo(sel.x + sel.w + 15, sel.y + sel.h - 25);
+      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + sel.h + 15);
+      object.ctx.lineTo(sel.x + sel.w - 25, sel.y + sel.h + 15);
+      object.ctx.lineTo(sel.x + sel.w - 25, sel.y + sel.h + 1);
+      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + sel.h + 1);
+      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + sel.h - 25);
+      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + sel.h - 25);
+      object.ctx.fill();
+      
+      // Bottom Left
+      object.ctx.beginPath();
+      object.ctx.moveTo(sel.x - 15, sel.y + sel.h - 25);
+      object.ctx.lineTo(sel.x - 1, sel.y + sel.h -25);
+      object.ctx.lineTo(sel.x - 1, sel.y + sel.h + 1);
+      object.ctx.lineTo(sel.x + 25, sel.y + sel.h + 1);
+      object.ctx.lineTo(sel.x + 25, sel.y + sel.h + 15);
+      object.ctx.lineTo(sel.x - 15, sel.y + sel.h + 15);
+      object.ctx.lineTo(sel.x - 15, sel.y + sel.h -25);
+      object.ctx.fill();
+      
+      object.canvas.addEventListener('touchstart',editor.crop.touch.start,false);
+      object.canvas.addEventListener('touchmove',editor.crop.touch.move,false);
+      object.canvas.addEventListener('touchend',editor.crop.touch.end,false);
+      
+      object.canvas.addEventListener('mousedown',editor.crop.touch.start,false);
+      object.canvas.addEventListener('mousemove',editor.crop.touch.move,false);
+      object.canvas.addEventListener('mouseup',editor.crop.touch.end,false);
     },
     touch: {
       start: function(e) {
-        var offset = $(this).offset(),
+        
+        e.preventDefault();
+        var offset = {
+              left: parseInt($(".active","#canvas").css("left"),10)-200,
+              top: parseInt($(".active","#canvas").css("top"),10)-200
+            },
+            t = e.changedTouches ? e.changedTouches[0] : e,
             touch = {
-              x: Math.floor(e.pageX - offset.left),
-              y: Math.floor(e.pageY - offset.top)
+              x: Math.floor(t.pageX - offset.left),
+              y: Math.floor(t.pageY - offset.top)
             },
             sel = editor.crop.theSelection;
         
         sel.px = touch.x - sel.x;
-        sel.py = touch.y - sel.y;
+        sel.py = touch.y - sel.y;        
+        
+        if (touch.x > sel.x + sel.csizeh && touch.x < sel.x + sel.w - sel.csizeh && 
+            touch.y > sel.y + sel.csizeh && touch.y < sel.y + sel.h - sel.csizeh) {
+          sel.bDragAll = true;
+        }
+        
+        // Check if resize cube is tapped
+        if (touch.x > sel.x - sel.csizeh && touch.x < sel.x + sel.csizeh &&
+            touch.y > sel.y - sel.csizeh && touch.y < sel.y + sel.csizeh) {
+
+            sel.bHow[0] = true;
+        }
+        if (touch.x > sel.x + sel.w-sel.csizeh && touch.x < sel.x + sel.w + sel.csizeh &&
+            touch.y > sel.y - sel.csizeh && touch.y < sel.y + sel.csizeh) {
+
+            sel.bHow[1] = true;
+        }
+        if (touch.x > sel.x + sel.w-sel.csizeh && touch.x < sel.x + sel.w + sel.csizeh &&
+            touch.y > sel.y + sel.h-sel.csizeh && touch.y < sel.y + sel.h + sel.csizeh) {
+
+            sel.bHow[2] = true;
+        }
+        if (touch.x > sel.x - sel.csizeh && touch.x < sel.x + sel.csizeh &&
+            touch.y > sel.y + sel.h-sel.csizeh && touch.y < sel.y + sel.h + sel.csizeh) {
+
+            sel.bHow[3] = true;
+        }
         
         if(sel.bHow[0]) {
           sel.px = touch.x - sel.x;
@@ -453,11 +559,6 @@ var editor = {
           sel.py = touch.y - sel.y - sel.h;
         }
         
-        if (touch.x > sel.x + sel.csizeh && touch.x < sel.x + sel.w - sel.csizeh && 
-            touch.y > sel.y + sel.csizeh && touch.y < sel.y + sel.h - sel.csizeh) {
-          sel.bDragAll = true;
-        }
-        
         for(i = 0; i < 4; i++) {
           if(sel.bHow[i]) {
             sel.bDrag[i] = true;
@@ -465,10 +566,15 @@ var editor = {
         }
       },
       move: function(e) {
-        var offset = $(this).offset(),
+        e.preventDefault();
+        var offset = {
+              left: parseInt($(".active","#canvas").css("left"),10)-200,
+              top: parseInt($(".active","#canvas").css("top"),10)-200
+            },
+            t = e.changedTouches ? e.changedTouches[0] : e,
             touch = {
-              x: Math.floor(e.pageX - offset.left),
-              y: Math.floor(e.pageY - offset.top)
+              x: Math.floor(t.pageX - offset.left),
+              y: Math.floor(t.pageY - offset.top)
             },
             sel = editor.crop.theSelection;
             
@@ -520,7 +626,13 @@ var editor = {
         editor.crop.drawScene(object);
       },
       end: function(e) {
+        editor.crop.theSelection.bDragAll = false;
         
+        for(i = 0; i < 4; i++) {
+          editor.crop.theSelection.bDrag[i] = false;
+        }
+        editor.crop.theSelection.px = 0;
+        editor.crop.theSelection.py = 0;
       }
     }
   },
@@ -543,7 +655,10 @@ var editor = {
     }
     data.ctx = data.canvas.getContext('2d');
     data.object = $(data.canvas).data('object');
-    data.img.src = editor.imgUrl(object.id);
+    //data.img.src = editor.imgUrl(object.id);
+    data.img.src = $(data.canvas).data('img');
+    
+    data.img64 = $(data.canvas).data('img');
     return data;
   },
   imgUrl: function(id) {
@@ -616,7 +731,7 @@ var editor = {
         top: base.y + object.y*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         left: base.x + object.x*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         webkitTransform: "rotate("+object.media.rotation+"deg)"
-      }).data('object',object).css('z-index',i).data('z',i).data('ref',refid);
+      }).data('object',object).css('z-index',i).data('z',i).data('ref',refid).data('img',canvas.toDataURL());
       
       document.getElementById("canvas_scale").appendChild(canvas);
       
