@@ -1,0 +1,282 @@
+[
+   {
+      "item":{
+         "brand_id":18,
+         "brand_name":"Coldwater Creek",
+         "created_at":"2011-07-07T15:42:16-04:00",
+         "featured":1,
+         "id":129,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"4009791_110_S copy.jpg",
+         "image_file_size":620935,
+         "image_updated_at":"2011-07-07T15:42:15-04:00",
+         "name":"Burnished Bead Top",
+         "picks":1,
+         "price":79.95,
+         "stripped_name":"Burnished Bead Top",
+         "updated_at":"2011-07-26T02:45:16-04:00",
+         "url":"http://www.coldwatercreek.com/product-detail/57871/64334/Burnished-Bead-Top.aspx?colorid=110",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":24,
+         "brand_name":"Miss Me",
+         "created_at":"2011-07-08T15:34:43-04:00",
+         "featured":1,
+         "id":214,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"Southwester Jeans.jpg",
+         "image_file_size":57759,
+         "image_updated_at":"2011-07-08T15:34:43-04:00",
+         "name":"Southwestern Jeans",
+         "picks":0,
+         "price":109.0,
+         "stripped_name":"Southwestern Jeans",
+         "updated_at":"2011-08-03T00:58:47-04:00",
+         "url":"http://www.missme.com/jw4288b11-vtg46",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":24,
+         "brand_name":"Miss Me",
+         "created_at":"2011-07-08T15:33:34-04:00",
+         "featured":1,
+         "id":212,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"Knit Scarf.jpg",
+         "image_file_size":54633,
+         "image_updated_at":"2011-07-08T15:33:33-04:00",
+         "name":"Knit Scarf",
+         "picks":0,
+         "price":44.0,
+         "stripped_name":"Knit Scarf",
+         "updated_at":"2011-07-26T02:45:17-04:00",
+         "url":"http://www.missme.com/jma058-taupe",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":null,
+         "brand_name":"Oscar de la Renta",
+         "created_at":"2011-08-11T13:11:07-04:00",
+         "featured":0,
+         "id":3269,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"stringio.txt",
+         "image_file_size":10186,
+         "image_updated_at":"2011-08-11T13:11:07-04:00",
+         "name":"Embroidered Satin Henri Pumps",
+         "picks":0,
+         "price":995.0,
+         "stripped_name":"Embroidered Satin Henri Pumps",
+         "updated_at":"2011-08-11T13:11:07-04:00",
+         "url":"http://www.stylefind.com/Oscar-De-La-Renta/-/1-MARI-PAPFAAEFJLJHLCJE/Embroidered-Satin-Henri-Pumps",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":41,
+         "brand_name":"Longchamp",
+         "created_at":"2011-07-12T10:13:39-04:00",
+         "featured":1,
+         "id":367,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"Nubuck Balzane.jpg",
+         "image_file_size":200406,
+         "image_updated_at":"2011-07-12T10:13:38-04:00",
+         "name":"Balzane Nubuck Handbag ",
+         "picks":0,
+         "price":1435.0,
+         "stripped_name":"Balzane Nubuck Handbag ",
+         "updated_at":"2011-07-26T02:45:18-04:00",
+         "url":"http://www.longchamp.com/en/balzane-balzane-1833715-2-600612.html&site=3",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":null,
+         "brand_name":"Roberto Cavalli",
+         "created_at":"2011-08-11T13:13:00-04:00",
+         "featured":0,
+         "id":3314,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"stringio.txt",
+         "image_file_size":7672,
+         "image_updated_at":"2011-08-11T13:13:00-04:00",
+         "name":"RC520S Sunglasses",
+         "picks":0,
+         "price":450.0,
+         "stripped_name":"RC520S Sunglasses",
+         "updated_at":"2011-08-11T13:13:00-04:00",
+         "url":"http://www.stylefind.com/Roberto-Cavalli/-/4-ENDL-B004S8N10Q/Rc520s-Sunglasses",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":37,
+         "brand_name":"Rimmel",
+         "created_at":"2011-07-11T14:44:55-04:00",
+         "featured":1,
+         "id":298,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"RIMBRZ_NB_021SNLT.jpeg",
+         "image_file_size":71128,
+         "image_updated_at":"2011-07-11T14:44:55-04:00",
+         "name":"Natural Bronzer with Minerals",
+         "picks":0,
+         "price":5.17,
+         "stripped_name":"Natural Bronzer with Minerals",
+         "updated_at":"2011-07-26T02:45:17-04:00",
+         "url":"http://www.rimmellondon.com/us/en/wheretobuyusa/ ",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":52,
+         "brand_name":"InStyle.com Trend",
+         "created_at":"2011-07-22T13:15:10-04:00",
+         "featured":1,
+         "id":549,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"60sSpotlight-7.jpg",
+         "image_file_size":73450,
+         "image_updated_at":"2011-07-22T13:15:09-04:00",
+         "name":"Becca lost weekend nail polishes",
+         "picks":0,
+         "price":25.0,
+         "stripped_name":"Becca lost weekend nail polishes",
+         "updated_at":"2011-07-27T16:08:06-04:00",
+         "url":"http://www.beccacosmetics.com/us/store/nail-polish/ ",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":52,
+         "brand_name":"InStyle.com Trend",
+         "created_at":"2011-07-22T13:13:24-04:00",
+         "featured":1,
+         "id":547,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"60sSpotlight-3.jpg",
+         "image_file_size":33418,
+         "image_updated_at":"2011-07-22T13:13:23-04:00",
+         "name":"Jouer hydrating lipstick in dusty",
+         "picks":0,
+         "price":22.0,
+         "stripped_name":"Jouer hydrating lipstick in dusty",
+         "updated_at":"2011-07-27T16:07:31-04:00",
+         "url":"http://www.jouercosmetics.com/product-1275/category-33/default.aspx ",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":null,
+         "brand_name":"Yves Saint Laurent",
+         "created_at":"2011-08-11T13:25:07-04:00",
+         "featured":0,
+         "id":3603,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"open-uri20110811-7198-1dtcvsl",
+         "image_file_size":11262,
+         "image_updated_at":"2011-08-11T13:25:07-04:00",
+         "name":"MASCARA VOLUME EFFET FAUX CILSLuxurious 1 High Density Black",
+         "picks":0,
+         "price":30.0,
+         "stripped_name":"MASCARA VOLUME EFFET FAUX CILSLuxurious 1 High Density Black",
+         "updated_at":"2011-08-11T13:25:07-04:00",
+         "url":"http://www.stylefind.com/Yves-Saint-Laurent/-/5-SEPH-1120708/Mascara-Volume-Effet-Faux-Cilsluxurious-1-High-Density-Black",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":31,
+         "brand_name":"Tous",
+         "created_at":"2011-07-11T19:14:14-04:00",
+         "featured":1,
+         "id":361,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"1.jpg",
+         "image_file_size":12323,
+         "image_updated_at":"2011-07-18T13:26:58-04:00",
+         "name":"Manolo Blahnik for TOUS pendant",
+         "picks":0,
+         "price":279.0,
+         "stripped_name":"Manolo Blahnik for TOUS pendant",
+         "updated_at":"2011-07-26T02:45:18-04:00",
+         "url":"http://shop.tous.com/US/item/114064530/?partner=7010&t_type=pxs",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":29,
+         "brand_name":"Silpada",
+         "created_at":"2011-07-11T14:00:34-04:00",
+         "featured":1,
+         "id":265,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"B1662.jpg",
+         "image_file_size":69083,
+         "image_updated_at":"2011-07-11T14:00:34-04:00",
+         "name":"Wavy Rosewood and Sterling Silver Bangle",
+         "picks":0,
+         "price":104.0,
+         "stripped_name":"Wavy Rosewood and Sterling Silver Bangle",
+         "updated_at":"2011-07-26T02:45:17-04:00",
+         "url":"http://www.silpadajewelry.com/B1662",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":30,
+         "brand_name":"Tacori",
+         "created_at":"2011-07-11T17:12:33-04:00",
+         "featured":1,
+         "id":349,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"4.jpg",
+         "image_file_size":25145,
+         "image_updated_at":"2011-07-18T13:16:19-04:00",
+         "name":"Smoky Quartz Cocktail Ring",
+         "picks":0,
+         "price":2470.0,
+         "stripped_name":"Smoky Quartz Cocktail Ring",
+         "updated_at":"2011-08-04T13:44:15-04:00",
+         "url":"http://www1.bloomingdales.com/catalog/product/index.ognc?ID=536561&CategoryID=21153",
+         "user_id":null
+      }
+   },
+   {
+      "item":{
+         "brand_id":null,
+         "brand_name":"Marc Jacobs",
+         "created_at":"2011-08-11T13:31:37-04:00",
+         "featured":0,
+         "id":3765,
+         "image_content_type":"image/jpeg",
+         "image_file_name":"open-uri20110811-7198-1oig449",
+         "image_file_size":12566,
+         "image_updated_at":"2011-08-11T13:31:37-04:00",
+         "name":"Marc Jacobs Lola Eau de Parfum 3.4 oz (No Color)",
+         "picks":0,
+         "price":88.0,
+         "stripped_name":"Marc Jacobs Lola Eau de Parfum 3.4 oz (No Color)",
+         "updated_at":"2011-08-11T13:31:37-04:00",
+         "url":"http://www.stylefind.com/Marc-Jacobs/-/5-ZAPP-7598478127769/Marc-Jacobs-Lola-Eau-De-Parfum-3-4-Oz-No-Color",
+         "user_id":null
+      }
+   }
+]

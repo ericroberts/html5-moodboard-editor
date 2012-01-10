@@ -187,7 +187,7 @@ $(function() {
   
   $(".crop").live("click", function() {
     var data = editor.getCanvas($(".active","#canvas").data('ref'));
-    editor.openCropTool(data);
+    editor.crop.open(data);
     return false;
   });
   
@@ -357,22 +357,20 @@ var editor = {
       zIndex: 601,
     },300).css("-webkit-transform","rotate(0deg)").addClass("overlay_object");
   },
-  openCropTool: function(object) {
-    editor.overlayCanvas(object);
-    
-    $("#toolbar").animate({
-      top: -100
-    },300, function() {
-      $("#crop").css("top", -100).show().animate({
-        top: 0
-      },300);
-    });
-    
-    theSelection = new editor.crop.selection(50,50,300,300);
-    
-    editor.crop.drawScene(object,theSelection);
-  },
   crop: {
+    open: function(object) {
+      editor.overlayCanvas(object);
+
+      $("#toolbar").animate({
+        top: -100
+      },300, function() {
+        $("#crop").css("top", -100).show().animate({
+          top: 0
+        },300);
+      });
+
+      editor.crop.drawScene(object);
+    },
     selection: function(x,y,w,h) {
       this.x = x; // initial positions
       this.y = y;
@@ -390,7 +388,8 @@ var editor = {
       this.bDrag = [false, false, false, false]; // drag statuses
       this.bDragAll = false; // drag whole selection
     },
-    drawScene: function(object,selection) { // main drawScene function
+    theSelection: null,
+    drawScene: function(object) { // main drawScene function
       object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height); // clear canvas
 
       // draw source image
@@ -401,9 +400,12 @@ var editor = {
       object.ctx.fillRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
 
       // draw selection
-      editor.crop.drawSelection(object,selection);
+      editor.crop.drawSelection(object);
     },
-    drawSelection: function(object,sel) {
+    drawSelection: function(object) {
+      console.log(object);
+      var sel = editor.crop.theSelection;
+      console.log(sel);
       object.ctx.strokeStyle = 'rgba(0,0,0,0.25)';
       object.ctx.lineWidth = 2;
       object.ctx.strokeRect(sel.x, sel.y, sel.w, sel.h);
@@ -419,7 +421,108 @@ var editor = {
       object.ctx.fillRect(sel.x + sel.w - sel.iCSize[1], sel.y - sel.iCSize[1], sel.iCSize[1] * 2, sel.iCSize[1] * 2);
       object.ctx.fillRect(sel.x + sel.w - sel.iCSize[2], sel.y + sel.h - sel.iCSize[2], sel.iCSize[2] * 2, sel.iCSize[2] * 2);
       object.ctx.fillRect(sel.x - sel.iCSize[3], sel.y + sel.h - sel.iCSize[3], sel.iCSize[3] * 2, sel.iCSize[3] * 2);
+      
+      
     },
+    touch: {
+      start: function(e) {
+        var offset = $(this).offset(),
+            touch = {
+              x: Math.floor(e.pageX - offset.left),
+              y: Math.floor(e.pageY - offset.top)
+            },
+            sel = editor.crop.theSelection;
+        
+        sel.px = touch.x - sel.x;
+        sel.py = touch.y - sel.y;
+        
+        if(sel.bHow[0]) {
+          sel.px = touch.x - sel.x;
+          sel.py = touch.y - sel.y;
+        }
+        if(sel.bHow[1]) {
+          sel.px = touch.x - sel.x - sel.w;
+          sel.py = touch.y - sel.y;
+        }
+        if(sel.bHow[2]) {
+          sel.px = touch.x - sel.x - sel.w;
+          sel.py = touch.y - sel.y - sel.h;
+        }
+        if(sel.bHow[3]) {
+          sel.px = touch.x - sel.x;
+          sel.py = touch.y - sel.y - sel.h;
+        }
+        
+        if (touch.x > sel.x + sel.csizeh && touch.x < sel.x + sel.w - sel.csizeh && 
+            touch.y > sel.y + sel.csizeh && touch.y < sel.y + sel.h - sel.csizeh) {
+          sel.bDragAll = true;
+        }
+        
+        for(i = 0; i < 4; i++) {
+          if(sel.bHow[i]) {
+            sel.bDrag[i] = true;
+          }
+        }
+      },
+      move: function(e) {
+        var offset = $(this).offset(),
+            touch = {
+              x: Math.floor(e.pageX - offset.left),
+              y: Math.floor(e.pageY - offset.top)
+            },
+            sel = editor.crop.theSelection;
+            
+        if(sel.bDragAll) {
+          sel.x = touch.x - sel.px;
+          sel.y = touch.y - sel.py;
+        }
+        
+        for(var i = 0; i < 4; i++) {
+          sel.bHow[i] = false;
+          sel.iCSize[i] = sel.csize;
+        }
+        
+        // in case of dragging of resize cubes
+        var iFW, iFH;
+        if (sel.bDrag[0]) {
+          var iFX = touch.x - sel.px;
+          var iFY = touch.y - sel.py;
+          iFW = sel.w + sel.x - iFX;
+          iFH = sel.h + sel.y - iFY;
+        }
+        if (sel.bDrag[1]) {
+          var iFX = sel.x;
+          var iFY = touch.y - sel.py;
+          iFW = touch.x - sel.px - iFX;
+          iFH = sel.h + sel.y - iFY;
+        }
+        if (sel.bDrag[2]) {
+          var iFX = sel.x;
+          var iFY = sel.y;
+          iFW = touch.x - sel.px - iFX;
+          iFH = touch.y - sel.py - iFY;
+        }
+        if (sel.bDrag[3]) {
+          var iFX = touch.x - sel.px;
+          var iFY = sel.y;
+          iFW = sel.w + sel.x - iFX;
+          iFH = touch.y - sel.py - iFY;
+        }
+
+        if (iFW > sel.csizeh * 2 && iFH > sel.csizeh * 2) {
+          sel.w = iFW;
+          sel.h = iFH;
+          sel.x = iFX;
+          sel.y = iFY;
+        }
+        
+        var object = editor.getCanvas($(".active","#canvas").data('ref'));
+        editor.crop.drawScene(object);
+      },
+      end: function(e) {
+        
+      }
+    }
   },
   advancedBG: function(object) {
     editor.overlayCanvas(object);
@@ -490,7 +593,7 @@ var editor = {
     var img = new Image(),
         canvas = document.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        src = '/images/items/'+object.id+'_400x400.jpg';
+        src = editor.imgUrl(object.id);
         
     canvas.setAttribute('id','item_'+refid);
   
@@ -503,7 +606,8 @@ var editor = {
       
       // Remove the background if required
       if(object.media.removed == "true") {
-        editor.removeColour(object,ctx,img);
+        editor.removeColour(ctx,img);
+        $(canvas).addClass('removed_bg');
       }
       
       $(canvas).css({
