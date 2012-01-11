@@ -6,8 +6,6 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
-  editor.crop.theSelection = editor.crop.selection(50,50,300,300);
-  
   $("#bg_tolerance").touchSlider({
     value: 5
   });
@@ -33,14 +31,6 @@ $(function() {
     object.media.rotation = $(this).val();
   });
   
-  /*
-  $(":not(canvas,.toolbar)").click(function(e) {
-    console.log(e);
-    $(".active","#canvas_scale").removeClass("active");
-    editor.closeToolbar();
-  });
-  */
-  
   $(".duplicate").live("click", function() {
     var data = $(".active","#canvas").data("object");
     var newobj = $.extend({},data);
@@ -62,65 +52,37 @@ $(function() {
   });
   
   $(".flip").live("click", function() {
-    /*
-    var object = $(".active","#canvas").data("object");
-    
-    if($(".active","#canvas").data("rotate")) { axis = $(".active","#canvas").data("rotate"); } 
-    else { axis = {x: 0, y: 0} }
-    
-    if(axis.y == 180) { axis.y = 0; } 
-    else { axis.y = 180; }
-    
-    $(".active","#canvas").css({
-      webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg) translate3d(0, 0, 0)",
-      webkitTransition: "1s"
-    }).data("rotate",{x: axis.x, y: axis.y});
-    
-    setTimeout(function() {
-      $(".active","#canvas").css("-webkit-transition-duration","0s");
-    },100);
-    */
+
     $(".active","#canvas").fadeTo(250,0.5, function() {
       var data = editor.getCanvas($(".active","#canvas").data('ref'));
-      console.log(data.img.width);
-      data.ctx.translate(data.img.width, 0);
-      data.ctx.scale(-1,1);
-      data.ctx.drawImage(data.img, 0, 0);
       
-      $(".active","#canvas").fadeTo(0.5,250);
+      data.img.mod.onload = function() {
+        data.ctx.translate(data.img.mod.width, 0);
+        data.ctx.scale(-1,1);
+        editor.crop.crop(data);
+
+        $(".active","#canvas").fadeTo(0.5,250);
+      }
     });
     return false;
+    
   });
   
   $(".flop").live("click", function() {
-    /*
-    var object = $(".active","#canvas").data("object");
-    
-    if($(".active","#canvas").data("rotate")) { axis = $(".active","#canvas").data("rotate"); } 
-    else { axis = {x: 0, y: 0} }
-    
-    if(axis.x == 180) { axis.x = 0; } 
-    else { axis.x = 180; }
-    
-    $(".active","#canvas").css({
-      webkitTransform: "rotate("+object.media.rotation+"deg) rotateX("+axis.x+"deg) rotateY("+axis.y+"deg)",
-      webkitTransition: "1s"
-    }).data("rotate",{x: axis.x, y: axis.y}).css("webkit-transition",0);
-    
-    setTimeout(function() {
-      $(".active","#canvas").css("-webkit-transition-duration","0s");
-    },100);
-    */
     
     $(".active","#canvas").fadeTo(250,0.5, function() {
       var data = editor.getCanvas($(".active","#canvas").data('ref'));
-      data.ctx.translate(0,data.img.height);
-      data.ctx.scale(1,-1);
-      data.ctx.drawImage(data.img, 0, 0);
       
-      $(".active","#canvas").fadeTo(0.5,250);
+      data.img.mod.onload = function() {
+        data.ctx.translate(0,data.img.mod.height);
+        data.ctx.scale(1,-1);
+        editor.crop.crop(data);
+
+        $(".active","#canvas").fadeTo(0.5,250);
+      }
     });
     return false;
+    
   });
   
   $(".depth").live("click", function() {
@@ -199,13 +161,25 @@ $(function() {
     if($(this).is(":checked")) {
       $("#advanced_bg").addClass("activated");
       $(".active","#canvas").addClass("removed_bg");
-      data.img.onload = function() { editor.removeColour(data.ctx,data.img); }
-      data.object.media.removed = "true";
+      $(data.canvas).data('img').mod_withbg = $(data.canvas).data('img').mod;
+      
+      data.img.mod.onload = function() { 
+        editor.removeColour(data.ctx,data.img.mod); 
+        data.object.media.removed = "true";
+        $(data.canvas).data('img').mod = data.canvas.toDataURL();
+      }
     } else {
       $("#advanced_bg").removeClass("activated");
       $(".active","#canvas").removeClass("removed_bg");
-      data.img.onload = function() { data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height); }
-      data.object.media.removed = null;
+      
+      data.img.mod_withbg.onload = function() { 
+        
+        data.ctx.drawImage(data.img.mod_withbg, 0, 0, data.img.mod_withbg.width, data.img.mod_withbg.height); 
+        data.object.media.removed = null;
+        $(data.canvas).data('img').mod = data.img.mod_withbg.src;
+        data.img.mod = data.img.mod_withbg;
+        editor.crop.crop(data);
+      }
     }
     
     $(canvas).data('object',data.object);
@@ -214,7 +188,6 @@ $(function() {
   
   $("#advanced_bg").live("click", function() {
     var data = editor.getCanvas($(".active","#canvas").data('ref'));
-    data.ctx.save();
     if($(this).hasClass("activated")) {
       editor.advancedBG(editor.getCanvas($(".active","#canvas").data('ref')));
     }
@@ -224,18 +197,18 @@ $(function() {
   $("#bg_tolerance").change(function() {
     if($("#removebg").is(":checked")) {
       var data = editor.getCanvas($(".active","#canvas").data('ref'));
-      data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
+      data.ctx.drawImage(data.img.mod, 0, 0, data.img.mod.width, data.img.mod.height);
       var f = $("#bg_feather").val() ? parseInt($("#bg_feather").val(),10) : null;
-      editor.removeColour(data.ctx,data.img,parseInt($("#bg_tolerance").val(),10),f);
+      editor.removeColour(data.ctx,data.img.mod,parseInt($("#bg_tolerance").val(),10),f);
     }
   });
   
   $("#bg_feather").change(function() {
     if($("#removebg").is(":checked")) {
       var data = editor.getCanvas($("#toolbar").data('id'));
-      data.ctx.drawImage(data.img, 0, 0, data.img.width, data.img.height);
+      data.ctx.drawImage(data.img.mod, 0, 0, data.img.mod.width, data.img.mod.height);
       var t = $("#bg_tolerance").val() ? parseInt($("#bg_tolerance").val(),10) : null;
-      editor.removeColour(data.ctx,data.img,t,parseInt($("#bg_feather").val(),10));
+      editor.removeColour(data.ctx,data.img.mod,t,parseInt($("#bg_feather").val(),10));
     }
   });
   
@@ -253,15 +226,26 @@ $(function() {
     
   });
   
+  $(".cancel,.overlay_close").live("click", function() {
+    var data = editor.getCanvas($(".active","#canvas").data('ref'));
+    data.ctx.drawImage(data.img.mod, 0, 0, data.img.mod.width, data.img.mod.height);
+    editor.crop.crop(data);
+    return false;
+  });
+  
   $("#crop .save").live("click", function() {
     editor.crop.save(editor.getCanvas($(".active","#canvas").data('ref')));
     
     return false;
   });
   
+  $("#advancedbgremoval .save").live("click", function() {
+    
+    return false;
+  });
+  
   $(".overlay_close").live("click", function() {
     editor.closeOverlay();
-    return false;
   });
   
 });
@@ -291,7 +275,8 @@ var editor = {
   events: {
     dragging: false,
     sizing: false,
-    rotating: 0
+    rotating: 0,
+    fingers: 0
   },
   items: {
     order: [],
@@ -343,6 +328,15 @@ var editor = {
       },300);
     });
   },
+  getSelection: function(object) {
+    var selection = {
+      x: object.object.mask.x,
+      y: object.object.mask.y,
+      w: object.object.mask.width,
+      h: object.object.mask.height
+    }
+    return selection;
+  },
   overlayCanvas: function(object) {
     $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { 
       $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); 
@@ -365,6 +359,11 @@ var editor = {
     },300).css("-webkit-transform","rotate(0deg)").addClass("overlay_object");
   },
   crop: {
+    crop: function(object) {
+      var sel = editor.getSelection(object);
+      object.ctx.clearRect(0, 0, object.canvas.width, object.canvas.height);
+      object.ctx.drawImage(object.img.mod, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
+    },
     open: function(object) {
       editor.overlayCanvas(object);
 
@@ -376,13 +375,20 @@ var editor = {
         },300);
       });
       
+      var item = object.object;
+      editor.crop.theSelection = editor.crop.selection(item.mask.x,item.mask.y,item.mask.width,item.mask.height);
+      
       editor.removeTouchListeners($(".active","#canvas").data('ref'));
       editor.crop.drawScene(object);
     },
-    save: function(object) {
-      var sel = editor.crop.theSelection;
+    save: function(object,sel) {
+      var obj = object.object;
+      
+      if(sel) { sel = editor.crop.selection(sel.x,sel.y,sel.w,sel.h); } 
+      else { sel = editor.crop.theSelection; }
+      
       object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
-      object.ctx.drawImage(object.img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
+      object.ctx.drawImage(object.img.mod, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
       
       object.canvas.removeEventListener('touchstart', editor.crop.touch.start, false);
       object.canvas.removeEventListener('touchmove', editor.crop.touch.move, false);
@@ -395,9 +401,12 @@ var editor = {
       editor.addTouchListeners(id);
       editor.addClickListeners(id);
       
-      $(object.canvas).addClass("removed_bg").data('img',object.canvas.toDataURL());
+      obj.mask.x = sel.x;
+      obj.mask.y = sel.y;
+      obj.mask.width = sel.w;
+      obj.mask.height = sel.h;
       
-      editor.crop.theSelection = new editor.crop.selection(50,50,300,300);
+      //$(object.canvas).addClass("removed_bg").data('img').mod = object.canvas.toDataURL();
     },
     selection: function(x,y,w,h) {
       this.x = x; // initial positions
@@ -420,11 +429,11 @@ var editor = {
     },
     theSelection: null,
     drawScene: function(object) { // main drawScene function
-      object.img.onload = function() {
+      object.img.mod.onload = function() {
         object.ctx.clearRect(0, 0, object.ctx.canvas.width, object.ctx.canvas.height); // clear canvas
 
         // draw source image
-        object.ctx.drawImage(object.img, 0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
+        object.ctx.drawImage(object.img.mod, 0, 0, object.ctx.canvas.width, object.ctx.canvas.height);
 
         // and make it darker
         object.ctx.fillStyle = 'rgba(255,255,255,0.65)';
@@ -439,7 +448,7 @@ var editor = {
 
       // draw part of original image
       if (sel.w > 0 && sel.h > 0) {
-        object.ctx.drawImage(object.img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
+        object.ctx.drawImage(object.img.mod, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
       }
 
       // draw resize cubes
@@ -447,46 +456,46 @@ var editor = {
       
       // Top Left
       object.ctx.beginPath();
-      object.ctx.moveTo(sel.x - 15, sel.y -15);
-      object.ctx.lineTo(sel.x + 25, sel.y - 15);
-      object.ctx.lineTo(sel.x + 25, sel.y - 1);
-      object.ctx.lineTo(sel.x - 1, sel.y - 1);
-      object.ctx.lineTo(sel.x - 1, sel.y + 25);
-      object.ctx.lineTo(sel.x - 15, sel.y + 25);
-      object.ctx.lineTo(sel.x - 15, sel.y - 15);
+      object.ctx.moveTo(sel.x + 1, sel.y + 1);
+      object.ctx.lineTo(sel.x + 30, sel.y + 1);
+      object.ctx.lineTo(sel.x + 30, sel.y + 10);
+      object.ctx.lineTo(sel.x + 10, sel.y + 10);
+      object.ctx.lineTo(sel.x + 10, sel.y + 30);
+      object.ctx.lineTo(sel.x + 1, sel.y + 30);
+      object.ctx.lineTo(sel.x + 1, sel.y + 1);
       object.ctx.fill();
       
       // Top Right
       object.ctx.beginPath();
-      object.ctx.moveTo(sel.x + sel.w - 25, sel.y - 15);
-      object.ctx.lineTo(sel.x + sel.w + 15, sel.y - 15);
-      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + 25);
-      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + 25);
-      object.ctx.lineTo(sel.x + sel.w + 1, sel.y - 1);
-      object.ctx.lineTo(sel.x + sel.w - 25, sel.y - 1);
-      object.ctx.lineTo(sel.x + sel.w - 25, sel.y - 15);
+      object.ctx.moveTo(sel.x + sel.w - 30, sel.y + 1);
+      object.ctx.lineTo(sel.x + sel.w - 1, sel.y + 1);
+      object.ctx.lineTo(sel.x + sel.w - 1, sel.y + 30);
+      object.ctx.lineTo(sel.x + sel.w - 10, sel.y + 30);
+      object.ctx.lineTo(sel.x + sel.w - 10, sel.y + 10);
+      object.ctx.lineTo(sel.x + sel.w - 30, sel.y + 10);
+      object.ctx.lineTo(sel.x + sel.w - 30, sel.y + 1);
       object.ctx.fill();
       
       // Bottom Right
       object.ctx.beginPath();
-      object.ctx.moveTo(sel.x + sel.w + 15, sel.y + sel.h - 25);
-      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + sel.h + 15);
-      object.ctx.lineTo(sel.x + sel.w - 25, sel.y + sel.h + 15);
-      object.ctx.lineTo(sel.x + sel.w - 25, sel.y + sel.h + 1);
-      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + sel.h + 1);
-      object.ctx.lineTo(sel.x + sel.w + 1, sel.y + sel.h - 25);
-      object.ctx.lineTo(sel.x + sel.w + 15, sel.y + sel.h - 25);
+      object.ctx.moveTo(sel.x + sel.w - 1, sel.y + sel.h - 30);
+      object.ctx.lineTo(sel.x + sel.w - 1, sel.y + sel.h - 1);
+      object.ctx.lineTo(sel.x + sel.w - 30, sel.y + sel.h - 1);
+      object.ctx.lineTo(sel.x + sel.w - 30, sel.y + sel.h - 10);
+      object.ctx.lineTo(sel.x + sel.w - 10, sel.y + sel.h - 10);
+      object.ctx.lineTo(sel.x + sel.w - 10, sel.y + sel.h - 30);
+      object.ctx.lineTo(sel.x + sel.w - 30, sel.y + sel.h - 30);
       object.ctx.fill();
       
       // Bottom Left
       object.ctx.beginPath();
-      object.ctx.moveTo(sel.x - 15, sel.y + sel.h - 25);
-      object.ctx.lineTo(sel.x - 1, sel.y + sel.h -25);
-      object.ctx.lineTo(sel.x - 1, sel.y + sel.h + 1);
-      object.ctx.lineTo(sel.x + 25, sel.y + sel.h + 1);
-      object.ctx.lineTo(sel.x + 25, sel.y + sel.h + 15);
-      object.ctx.lineTo(sel.x - 15, sel.y + sel.h + 15);
-      object.ctx.lineTo(sel.x - 15, sel.y + sel.h -25);
+      object.ctx.moveTo(sel.x + 1, sel.y + sel.h - 30);
+      object.ctx.lineTo(sel.x + 10, sel.y + sel.h - 30);
+      object.ctx.lineTo(sel.x + 10, sel.y + sel.h - 10);
+      object.ctx.lineTo(sel.x + 30, sel.y + sel.h - 10);
+      object.ctx.lineTo(sel.x + 30, sel.y + sel.h - 1);
+      object.ctx.lineTo(sel.x + 1, sel.y + sel.h - 1);
+      object.ctx.lineTo(sel.x + 1, sel.y + sel.h - 30);
       object.ctx.fill();
       
       object.canvas.addEventListener('touchstart',editor.crop.touch.start,false);
@@ -523,22 +532,18 @@ var editor = {
         // Check if resize cube is tapped
         if (touch.x > sel.x - sel.csizeh && touch.x < sel.x + sel.csizeh &&
             touch.y > sel.y - sel.csizeh && touch.y < sel.y + sel.csizeh) {
-
             sel.bHow[0] = true;
         }
         if (touch.x > sel.x + sel.w-sel.csizeh && touch.x < sel.x + sel.w + sel.csizeh &&
             touch.y > sel.y - sel.csizeh && touch.y < sel.y + sel.csizeh) {
-
             sel.bHow[1] = true;
         }
         if (touch.x > sel.x + sel.w-sel.csizeh && touch.x < sel.x + sel.w + sel.csizeh &&
             touch.y > sel.y + sel.h-sel.csizeh && touch.y < sel.y + sel.h + sel.csizeh) {
-
             sel.bHow[2] = true;
         }
         if (touch.x > sel.x - sel.csizeh && touch.x < sel.x + sel.csizeh &&
             touch.y > sel.y + sel.h-sel.csizeh && touch.y < sel.y + sel.h + sel.csizeh) {
-
             sel.bHow[3] = true;
         }
         
@@ -651,14 +656,19 @@ var editor = {
     var object = $("#item_"+id).data('object');
     var data = {
       canvas: document.getElementById('item_'+id),
-      img: new Image()
+      img: {
+        orig: new Image(),
+        mod: new Image(),
+        mod_withbg: new Image()
+      }
     }
     data.ctx = data.canvas.getContext('2d');
     data.object = $(data.canvas).data('object');
-    //data.img.src = editor.imgUrl(object.id);
-    data.img.src = $(data.canvas).data('img');
     
-    data.img64 = $(data.canvas).data('img');
+    data.img.orig.src = $(data.canvas).data('img').orig;
+    data.img.mod.src = $(data.canvas).data('img').mod;
+    data.img.mod_withbg.src = $(data.canvas).data('img').mod_withbg;
+    
     return data;
   },
   imgUrl: function(id) {
@@ -690,6 +700,8 @@ var editor = {
       }
     }
     ctx.putImageData(imageData,0,0);
+    
+    
   },
   getAlpha: function(diff,step) {
     return diff*step;
@@ -725,15 +737,32 @@ var editor = {
         $(canvas).addClass('removed_bg');
       }
       
+      var img_src = canvas.toDataURL();
+      
       $(canvas).css({
         width: 400*object.media.scale*editor.window.zoom,
         height: 400*object.media.scale*editor.window.zoom,
         top: base.y + object.y*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         left: base.x + object.x*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         webkitTransform: "rotate("+object.media.rotation+"deg)"
-      }).data('object',object).css('z-index',i).data('z',i).data('ref',refid).data('img',canvas.toDataURL());
+      }).data('object',object)
+        .css('z-index',i)
+        .data('z',i)
+        .data('ref',refid)
+        .data('img',{
+          orig: img_src, 
+          mod: img_src,
+          mod_withbg: img_src
+        });
+      
+      var sel = editor.crop.selection(object.mask.x,object.mask.y,object.mask.width,object.mask.height);
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.drawImage(img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
       
       document.getElementById("canvas_scale").appendChild(canvas);
+      
+      var data = editor.getCanvas(refid);
+      //editor.crop.crop(data);
       
       // Add touch events
       editor.addTouchListeners(refid);
@@ -812,16 +841,20 @@ var editor = {
     $("#toolbar").fadeOut(300);
   },
   touch: function(event) {
-    editor.activateObject($(this));
-    
-    var touch = event.changedTouches[0];
-    
-    if(!editor.events.dragging){
-      editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
+    if(editor.events.fingers == 0) {
+      editor.activateObject($(this));
+
+      var touch = event.changedTouches[0];
+
+      if(!editor.events.dragging){
+        editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
+      }
     }
+    editor.events.fingers++;
   },
   touchend: function(evt) { 
     editor.events.dragging = false;
+    editor.events.fingers--;
   },
   touchmove: function(event) {
     if($(this).hasClass("active")) {
