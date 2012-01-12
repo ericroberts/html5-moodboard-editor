@@ -6,6 +6,20 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
+  var canvas = $("<div></div>");
+  canvas.css({
+    width: editor.defaults.width*editor.window.zoom,
+    height: editor.defaults.height*editor.window.zoom,
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    zIndex: 0,
+    marginLeft: -(editor.defaults.width*editor.window.zoom)/2,
+    marginTop: -(editor.defaults.height*editor.window.zoom)/2,
+    background: 'rgba(0,0,0,0.1)'
+  });
+  $("body").prepend(canvas);
+  
   $("#bg_tolerance").touchSlider({
     value: 5
   });
@@ -18,6 +32,7 @@ $(function() {
     for(var i = 0; i < data.olioboard.object.length; i++) {
       var object = data.olioboard.object[i];
       editor.addObject(object,i);
+      editor.panel.addItem(object);
     }
   },"json");
   
@@ -64,6 +79,7 @@ $(function() {
         $(".active","#canvas").fadeTo(0.5,250);
       }
     });
+    
     return false;
     
   });
@@ -251,10 +267,8 @@ $(function() {
 });
 
 $(window).resize(function() {
-  editor.window = {
-    width: $(window).width(),
-    height: $(window).height()
-  };
+  editor.window.width = $(window).width();
+  editor.window.height = $(window).height();
 });
 
 /*
@@ -657,7 +671,6 @@ var editor = {
     var data = {
       canvas: document.getElementById('item_'+id),
       img: {
-        orig: new Image(),
         mod: new Image(),
         mod_withbg: new Image()
       }
@@ -665,9 +678,11 @@ var editor = {
     data.ctx = data.canvas.getContext('2d');
     data.object = $(data.canvas).data('object');
     
-    data.img.orig.src = $(data.canvas).data('img').orig;
+    //data.img.orig.src = $(data.canvas).data('img').orig;
     data.img.mod.src = $(data.canvas).data('img').mod;
-    data.img.mod_withbg.src = $(data.canvas).data('img').mod_withbg;
+    if($(data.canvas).data('img').mod_withbg) {
+      data.img.mod_withbg.src = $(data.canvas).data('img').mod_withbg;
+    }
     
     return data;
   },
@@ -738,7 +753,7 @@ var editor = {
       }
       
       var img_src = canvas.toDataURL();
-      
+      //img_src = editor.imgUrl(object.id);
       $(canvas).css({
         width: 400*object.media.scale*editor.window.zoom,
         height: 400*object.media.scale*editor.window.zoom,
@@ -750,9 +765,7 @@ var editor = {
         .data('z',i)
         .data('ref',refid)
         .data('img',{
-          orig: img_src, 
-          mod: img_src,
-          mod_withbg: img_src
+          mod: img_src
         });
       
       var sel = editor.crop.selection(object.mask.x,object.mask.y,object.mask.width,object.mask.height);
@@ -760,9 +773,6 @@ var editor = {
       ctx.drawImage(img, sel.x, sel.y, sel.w, sel.h, sel.x, sel.y, sel.w, sel.h);
       
       document.getElementById("canvas_scale").appendChild(canvas);
-      
-      var data = editor.getCanvas(refid);
-      //editor.crop.crop(data);
       
       // Add touch events
       editor.addTouchListeners(refid);
@@ -841,7 +851,7 @@ var editor = {
     $("#toolbar").fadeOut(300);
   },
   touch: function(event) {
-    if(editor.events.fingers == 0) {
+    //if(editor.events.fingers == 0) {
       editor.activateObject($(this));
 
       var touch = event.changedTouches[0];
@@ -849,12 +859,12 @@ var editor = {
       if(!editor.events.dragging){
         editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
       }
-    }
-    editor.events.fingers++;
+    //}
+    //editor.events.fingers++;
   },
   touchend: function(evt) { 
     editor.events.dragging = false;
-    editor.events.fingers--;
+    //editor.events.fingers--;
   },
   touchmove: function(event) {
     if($(this).hasClass("active")) {
@@ -925,6 +935,152 @@ var editor = {
   zoom: function(e) {
     $(this).css("-webkit-transform","scale("+event.scale+")");
     e.preventDefault();
+  },
+  panel: {
+    addItem: function(object) {
+      var src = editor.imgUrl(object.id);
+      var li = $("<li><img src="+src+" alt="+object.id+" /></li>");
+      $('img',li).data('object',object);
+      $("#testitems").append(li);
+      
+      $('img',li).bind('touchstart',editor.panel.touch.start)
+        .bind('touchmove',editor.panel.touch.move)
+        .bind('touchend',editor.panel.touch.end)
+        .bind('mousedown',editor.panel.touch.start)
+        .bind('mousemove',editor.panel.touch.move)
+        .bind('mouseup',editor.panel.touch.end);
+    },
+    events: {
+      dragging: false
+    },
+    touch: {
+      start: function(e) {
+        var event = e.originalEvent;
+        var t = event.changedTouches ? event.changedTouches[0] : event,
+            o = $(this).offset();
+        
+        $(this).closest("li").addClass("empty");
+        
+        $("#canvas_scale").append($(this));
+        
+        $(this).addClass('moving').css({ 
+          top: o.top-10,
+          left: o.left-10
+        });
+        
+        if(editor.panel.events.dragging == false) {
+          editor.panel.events.dragging = [t.pageX - o.left + 10, t.pageY - o.top + 10];
+        }
+        
+        e.preventDefault();
+      },
+      move: function(e) {
+        var event = e.originalEvent;
+        var t = event.changedTouches ? event.changedTouches[0] : event;
+
+        if($(this).hasClass("moving")) {
+          $(this).css({
+            top: t.pageY - editor.panel.events.dragging[1],
+            left: t.pageX - editor.panel.events.dragging[0]
+          });
+        }
+
+        e.preventDefault();
+      },
+      end: function(e) {
+        var event = e.originalEvent;
+        var t = event.changedTouches ? event.changedTouches[0] : event,
+            io = {
+              left: parseInt(this.style.left,10)+$(this).width(),
+              top: parseInt(this.style.top,10)+$(this).width()
+            },
+            po = $("#items").offset();
+            
+        var base = {
+              x: editor.window.width/2,
+              y: editor.window.height/2
+            },
+            obj = new editor.setup.item($(this).attr("alt"));
+            
+        obj.x = (parseInt(this.style.left,10) - base.x + $(this).width()/2)/editor.window.zoom;
+        obj.y = (parseInt(this.style.top,10) - base.y + $(this).height()/2)/editor.window.zoom;
+
+        editor.panel.events.dragging = false;
+        
+        var d = {
+          w: $(this).width(),
+          h: $(this).height(),
+          t: parseInt(this.style.top),
+          l: parseInt(this.style.left)
+        }
+        
+        var img = $(this);
+        
+        $(".active","#canvas").removeClass("active");
+        img.animate({
+          width: 50,
+          height: 50,
+          top: d.t + (d.h-50)/2,
+          left: d.l + (d.w-50)/2,
+          opacity: 0
+        },80, 'easeOutQuad', function() {
+          img.animate({
+            width: 400*editor.window.zoom,
+            height: 400*editor.window.zoom,
+            top: d.t + (d.h-400*editor.window.zoom)/2,
+            left: d.l + (d.w-400*editor.window.zoom)/2,
+            opacity: 1
+          },200, 'easeOutQuad', function() {
+            editor.addObject(obj,editor.id.count,true);
+            setTimeout(function() {
+              img.removeClass("moving").appendTo(".empty").css({
+                width: 80,
+                height: 80
+              });
+              $(".empty").removeClass("empty");
+            },200);
+          });
+        });
+      }
+    }
+  },
+  setup: {
+    item: function(id) {
+      var defaults = {
+        id: id,
+        x: 0,
+        y: 0,
+        frame: {
+          style: "None"
+        },
+        mask: {
+          type: "Rect",
+          x: 0,
+          y: 0,
+          width: 400,
+          height: 400
+        },
+        media: {
+          feather: null,
+          scale: 1,
+          scaleLock: 0,
+          swatch: null,
+          angleLock: 0,
+          swatchMin: null,
+          swatchMax: null,
+          hScale: 1,
+          vScale: 1,
+          rotation: 0,
+          removed: null,
+          rangeMin: null,
+          rangeMax: null,
+          x: 0,
+          y: 0,
+          type: "image"
+        }
+      }
+      return defaults;
+    }
   }
 };
 
