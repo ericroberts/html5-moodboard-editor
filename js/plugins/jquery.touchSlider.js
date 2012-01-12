@@ -41,34 +41,7 @@
       $("a",plugin.settings.markup).each(function() { this.addEventListener('touchend', end, false); });
       
       // Click
-      $("a",plugin.settings.markup).mousedown(function(e) {
-        $(this).data('mousedown',true);
-        dragging = e.pageX - parseInt($(this).css("left"),10);
-      });
-      $("a",plugin.settings.markup).mousemove(function(e) {
-        if($(this).data('mousedown') == true && dragging) {
-          var distance = e.pageX - dragging;
-          if(distance < 0) {
-            position = 0;
-          } else if(distance > plugin.settings.markup.width()) {
-            position = plugin.settings.markup.width();
-          } else {
-            position = distance;
-          }
-          $(this).css("left",position);
-
-          // Find where we are in the range
-          var percent = position/plugin.settings.width,
-              range = Math.abs(plugin.settings.range.end-plugin.settings.range.start),
-              value = (percent*range)+plugin.settings.range.start;
-
-          $element.val(value).change();
-        }
-      });
-      $(document).mouseup(function(e) {
-        $(this).data('mousedown',false);
-        dragging = false;
-      });
+      $("a",plugin.settings.markup).mousedown(mousedown);
       
       $("a",plugin.settings.markup).css({
         left: (plugin.settings.value/Math.abs(plugin.settings.range.end-plugin.settings.range.start))*plugin.settings.width
@@ -77,7 +50,42 @@
       $element.val(plugin.settings.value);
     }
     
-    var dragging = false;
+    var drag,
+        dragging = false;
+    
+    var mousedown = function(e) {
+      drag = $(this);
+      dragging = e.pageX - parseInt($(this).css("left"),10);
+      document.addEventListener('mousemove',mousemove,false);
+      document.addEventListener('mouseup',mouseup,false);
+    }
+    
+    var mousemove = function(e) {
+      
+      var distance = e.pageX - dragging;
+      if(distance < 0) {
+        position = 0;
+      } else if(distance > plugin.settings.markup.width()) {
+        position = plugin.settings.markup.width();
+      } else {
+        position = distance;
+      }
+      drag.css("left",position);
+
+      // Find where we are in the range
+      var percent = position/plugin.settings.width,
+          range = Math.abs(plugin.settings.range.end-plugin.settings.range.start),
+          value = (percent*range)+plugin.settings.range.start;
+
+      $element.val(value).change();
+      
+    }
+    
+    var mouseup = function(e) {
+      drag = null;
+      document.removeEventListener('mousemove',mousemove);
+      document.removeEventListener('mouseup',mouseup);
+    }
     
     var touch = function(e) {
       plugin.settings.onStart();

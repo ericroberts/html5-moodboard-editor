@@ -6,6 +6,7 @@ $(function() {
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
   
+  /*
   var canvas = $("<div></div>");
   canvas.css({
     width: editor.defaults.width*editor.window.zoom,
@@ -19,6 +20,7 @@ $(function() {
     background: 'rgba(0,0,0,0.1)'
   });
   $("body").prepend(canvas);
+  */
   
   $("#bg_tolerance").touchSlider({
     value: 5
@@ -804,9 +806,78 @@ var editor = {
     canvas.removeEventListener('touchstart', editor.touch, false);
   },
   addClickListeners: function(id) {
-    $("#item_"+id).click(function() {
-      editor.activateObject($(this));
-    });
+    var canvas = document.getElementById('item_'+id);
+    canvas.addEventListener('mousedown', editor.canvas.events.mouse.down, false);
+  },
+  canvas: {
+    events: {
+      drag: null,
+      dragging: false,
+      mouse: {
+        down: function(e) {
+          var canvas = $(this);
+          editor.canvas.events.drag = canvas;
+          editor.activateObject(canvas);
+          
+          document.addEventListener('mousemove',editor.canvas.events.mouse.move);
+          document.addEventListener('mouseup',editor.canvas.events.mouse.up);
+
+          if(!editor.canvas.events.dragging){
+            editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
+            console.log(editor.canvas.events.dragging);
+          }
+        },
+        move: function(e) {
+          var el = editor.canvas.events.drag;
+          if(el.hasClass("active")) {
+            if(editor.canvas.events.dragging) {
+              el.css({
+                left: e.pageX - editor.canvas.events.dragging[0] + 'px',
+                top: e.pageY - editor.canvas.events.dragging[1] + 'px'
+              });
+            }
+          }
+          e.preventDefault();
+        },
+        up: function(e) {
+          editor.canvas.events.drag = null;
+          document.removeEventListener('mousemove',editor.canvas.events.mouse.move);
+          document.removeEventListener('mouseup',editor.canvas.events.mouse.up);
+        }
+      },
+      touch: {
+        start: function(e) {
+          
+        },
+        move: function(e) {
+          
+        },
+        end: function(e) {
+          
+        }
+      }
+    }
+  },
+  test: {
+    mousedown: function(e) {
+      $(this).addClass('doc_active_class');
+      document.addEventListener('mousemove',editor.test.mousemove,false);
+      document.addEventListener('mouseup',editor.test.mouseup,false);
+      e.preventDefault();
+    },
+    mousemove: function(e) {
+      $('.doc_active_class').css({
+        top: e.pageY,
+        left: e.pageX
+      });
+      e.preventDefault();
+    },
+    mouseup: function(e) {
+      $('.doc_active_class').removeClass('doc_active_class');
+      document.removeEventListener('mouseover',editor.test.mouseover);
+      document.removeEventListener('mouseup',editor.test.mouseup);
+      e.preventDefault();
+    }
   },
   getVendorURL: function(url) {
     return url.match(/:\/\/(.[^/]+)/)[1];
@@ -854,7 +925,7 @@ var editor = {
     //if(editor.events.fingers == 0) {
       editor.activateObject($(this));
 
-      var touch = event.changedTouches[0];
+      var touch = event.changedTouches ? event.changedTouches[0] : event;
 
       if(!editor.events.dragging){
         editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
@@ -870,7 +941,7 @@ var editor = {
     if($(this).hasClass("active")) {
       event.preventDefault();
 
-      var touch = event.changedTouches[0];
+      var touch = event.changedTouches ? event.changedTouches[0] : event;
       if(editor.events.dragging && !editor.events.sizing) {
         this.style.left = touch.pageX - editor.events.dragging[0] + "px";
         this.style.top = touch.pageY - editor.events.dragging[1] + "px";
