@@ -791,70 +791,66 @@ var editor = {
   },
   addTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
-    canvas.addEventListener('touchmove', editor.touchmove, false);
+    canvas.addEventListener('touchstart', editor.canvas.events.start, false);
+    canvas.addEventListener('touchmove', editor.canvas.events.move, false);
+    canvas.addEventListener('touchend', editor.canvas.events.end, false);
     canvas.addEventListener('gesturestart', editor.gesture, false);
     canvas.addEventListener('gesturechange', editor.gesturechange, false);
     canvas.addEventListener('gestureend', editor.gestureend, false);
-    canvas.addEventListener('touchstart', editor.touch, false);
   },
   removeTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
-    canvas.removeEventListener('touchmove', editor.touchmove, false);
+    canvas.removeEventListener('touchstart', editor.canvas.events.start, false);
+    canvas.removeEventListener('touchmove', editor.canvas.events.move, false);
+    canvas.removeEventListener('touchend', editor.canvas.events.end, false);
     canvas.removeEventListener('gesturestart', editor.gesture, false);
     canvas.removeEventListener('gesturechange', editor.gesturechange, false);
     canvas.removeEventListener('gestureend', editor.gestureend, false);
-    canvas.removeEventListener('touchstart', editor.touch, false);
   },
   addClickListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
-    canvas.addEventListener('mousedown', editor.canvas.events.mouse.down, false);
+    canvas.addEventListener('mousedown', editor.canvas.events.start, false);
+  },
+  removeClickListeners: function(id) {
+    var canvas = document.getElementById('item_'+id);
+    canvas.removeEventListener('mousedown', editor.canvas.events.start, false);
   },
   canvas: {
     events: {
       drag: null,
       dragging: false,
-      mouse: {
-        down: function(e) {
-          var canvas = $(this);
-          editor.canvas.events.drag = canvas;
-          editor.activateObject(canvas);
-          
-          document.addEventListener('mousemove',editor.canvas.events.mouse.move);
-          document.addEventListener('mouseup',editor.canvas.events.mouse.up);
-
-          if(!editor.canvas.events.dragging){
-            editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
-            console.log(editor.canvas.events.dragging);
-          }
-        },
-        move: function(e) {
-          var el = editor.canvas.events.drag;
-          if(el.hasClass("active")) {
-            if(editor.canvas.events.dragging) {
-              el.css({
-                left: e.pageX - editor.canvas.events.dragging[0] + 'px',
-                top: e.pageY - editor.canvas.events.dragging[1] + 'px'
-              });
-            }
-          }
-          e.preventDefault();
-        },
-        up: function(e) {
-          editor.canvas.events.drag = null;
-          document.removeEventListener('mousemove',editor.canvas.events.mouse.move);
-          document.removeEventListener('mouseup',editor.canvas.events.mouse.up);
+      start: function(event) {
+        var canvas = $(this);
+        editor.canvas.events.drag = canvas;
+        editor.activateObject(canvas);
+        
+        var e = event.changedTouches ? event.changedTouches[0] : event;
+        
+        if(!event.changedTouches) {
+          document.addEventListener('mousemove',editor.canvas.events.move);
+          document.addEventListener('mouseup',editor.canvas.events.end);
+        }
+        
+        if(!editor.canvas.events.dragging){
+          editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
         }
       },
-      touch: {
-        start: function(e) {
-          
-        },
-        move: function(e) {
-          
-        },
-        end: function(e) {
-          
+      move: function(e) {
+        var el = editor.canvas.events.drag;
+        if(el.hasClass("active")) {
+          if(editor.canvas.events.dragging) {
+            el.css({
+              left: e.pageX - editor.canvas.events.dragging[0] + 'px',
+              top: e.pageY - editor.canvas.events.dragging[1] + 'px'
+            });
+          }
         }
+        e.preventDefault();
+      },
+      end: function(e) {
+        editor.canvas.events.drag = null;
+        document.removeEventListener('mousemove',editor.canvas.events.move);
+        document.removeEventListener('mouseup',editor.canvas.events.up);
       }
     }
   },
@@ -920,33 +916,6 @@ var editor = {
   },
   closeToolbar: function() {
     $("#toolbar").fadeOut(300);
-  },
-  touch: function(event) {
-    //if(editor.events.fingers == 0) {
-      editor.activateObject($(this));
-
-      var touch = event.changedTouches ? event.changedTouches[0] : event;
-
-      if(!editor.events.dragging){
-        editor.events.dragging = [touch.pageX - parseInt(this.style.left), touch.pageY - parseInt(this.style.top)];
-      }
-    //}
-    //editor.events.fingers++;
-  },
-  touchend: function(evt) { 
-    editor.events.dragging = false;
-    //editor.events.fingers--;
-  },
-  touchmove: function(event) {
-    if($(this).hasClass("active")) {
-      event.preventDefault();
-
-      var touch = event.changedTouches ? event.changedTouches[0] : event;
-      if(editor.events.dragging && !editor.events.sizing) {
-        this.style.left = touch.pageX - editor.events.dragging[0] + "px";
-        this.style.top = touch.pageY - editor.events.dragging[1] + "px";
-      }
-    }
   },
   gesture: function(event) {
     if($(this).hasClass("active")) {
