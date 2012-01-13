@@ -269,6 +269,7 @@ $(function() {
   });
   
   $("#crop .cancel").live('click', function() {
+    var object = editor.getCanvas($(".active","#canvas").data('ref'));
     object.canvas.removeEventListener('touchstart',editor.crop.touch.start,false);
     object.canvas.removeEventListener('touchmove',editor.crop.touch.move,false);
     object.canvas.removeEventListener('touchend',editor.crop.touch.end,false);
@@ -276,6 +277,9 @@ $(function() {
     object.canvas.removeEventListener('mousedown',editor.crop.touch.start,false);
     object.canvas.removeEventListener('mousemove',editor.crop.touch.move,false);
     object.canvas.removeEventListener('mouseup',editor.crop.touch.end,false);
+    
+    editor.addTouchListeners($(".active","#canvas").data('ref'));
+    editor.addClickListeners($(".active","#canvas").data('ref'));
   });
   
   $("#advancedbgremoval .save").live("click", function() {
@@ -665,8 +669,10 @@ var editor = {
           sel.y = iFY;
         }
         
-        var object = editor.getCanvas($(".active","#canvas").data('ref'));
-        editor.crop.drawScene(object);
+        if((sel.x + sel.w <= 400 && sel.y + sel.h <= 400)) {
+          var object = editor.getCanvas($(".active","#canvas").data('ref'));
+          editor.crop.drawScene(object);
+        }
       },
       end: function(e) {
         editor.crop.theSelection.bDragAll = false;
