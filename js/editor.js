@@ -247,7 +247,7 @@ $(function() {
     
   });
   
-  $(".cancel,.overlay_close").live("click", function() {
+  $(".cancel").live("click", function() {
     var data = editor.getCanvas($(".active","#canvas").data('ref'));
     data.ctx.drawImage(data.img.mod, 0, 0, data.img.mod.width, data.img.mod.height);
     editor.crop.crop(data);
@@ -260,13 +260,32 @@ $(function() {
     return false;
   });
   
+  $("#crop .reset").live("click", function() {
+    var object = editor.getCanvas($(".active","#canvas").data('ref'));
+    var m = object.object.mask;
+    editor.crop.theSelection = editor.crop.selection(m.x,m.y,m.width,m.height);
+    editor.crop.drawScene(object);
+    return false;
+  });
+  
+  $("#crop .cancel").live('click', function() {
+    object.canvas.removeEventListener('touchstart',editor.crop.touch.start,false);
+    object.canvas.removeEventListener('touchmove',editor.crop.touch.move,false);
+    object.canvas.removeEventListener('touchend',editor.crop.touch.end,false);
+      
+    object.canvas.removeEventListener('mousedown',editor.crop.touch.start,false);
+    object.canvas.removeEventListener('mousemove',editor.crop.touch.move,false);
+    object.canvas.removeEventListener('mouseup',editor.crop.touch.end,false);
+  });
+  
   $("#advancedbgremoval .save").live("click", function() {
     
     return false;
   });
   
-  $(".overlay_close").live("click", function() {
-    editor.closeOverlay();
+  $("#advancedbgremoval .reset").live("click", function() {
+    
+    return false;
   });
   
 });
@@ -316,8 +335,8 @@ var editor = {
     
   },
   closeOverlay: function() {
-    $(".overlay,.overlay_close").fadeOut(300, function() {
-      $(".overlay,.overlay_close").remove();
+    $(".overlay").fadeOut(300, function() {
+      $(".overlay").remove();
     });
     $(".checkerboard").remove();
     var object = $(".overlay_object").data('position');
@@ -358,7 +377,6 @@ var editor = {
   },
   overlayCanvas: function(object) {
     $("body").prepend($("<div class='overlay'></div>").hide().fadeIn(300, function() { 
-      $("body").prepend($("<a href='#' class='overlay_close'>Close</a>").hide().fadeIn(300)); 
       $("body").prepend($("<div class='checkerboard'></div>").css({
         top: editor.window.height/2,
         left: editor.window.width/2,
@@ -837,7 +855,6 @@ var editor = {
         
         if(!editor.canvas.events.dragging){
           editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
-          console.log(editor.canvas.events.dragging);
         }
       },
       move: function(e) {
@@ -891,6 +908,19 @@ var editor = {
     $("#toolbar").fadeIn(300).data("id",object.id);
     $("#rotation").val(Math.round(object.media.rotation)+"°");
     $("#scale").val(Math.round(object.media.scale*100)+"%");
+    
+    if(object.media.scaleLock == 1) {
+      $("#lock_scale").attr("checked","checked");
+    } else {
+      $("#lock_scale").removeAttr("checked");
+    }
+    
+    if(object.media.angleLock == 1) {
+      $("#lock_rotation").attr("checked","checked");
+    } else {
+      $("#lock_rotation").removeAttr("checked");
+    }
+    
     if(object.media.removed == "true") {
       $("#removebg").attr("checked","checked");
     } else {
@@ -1040,6 +1070,8 @@ var editor = {
         obj.x = (parseInt(el.css('left'),10) - base.x + $(el).width()/2)/editor.window.zoom;
         obj.y = (parseInt(el.css('top'),10) - base.y + $(el).height()/2)/editor.window.zoom;
         
+        console.log(obj);
+        
         $(".active","#canvas").removeClass("active");
         el.animate({
           width: 50,
@@ -1100,7 +1132,7 @@ var editor = {
           hScale: 1,
           vScale: 1,
           rotation: 0,
-          removed: null,
+          removed: 'true',
           rangeMin: null,
           rangeMax: null,
           x: 0,
