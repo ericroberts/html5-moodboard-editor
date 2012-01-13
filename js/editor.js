@@ -837,13 +837,11 @@ var editor = {
       },
       move: function(e) {
         var el = editor.canvas.events.drag;
-        if(el.hasClass("active")) {
-          if(editor.canvas.events.dragging) {
-            el.css({
-              left: e.pageX - editor.canvas.events.dragging[0] + 'px',
-              top: e.pageY - editor.canvas.events.dragging[1] + 'px'
-            });
-          }
+        if(el.hasClass("active") && editor.canvas.events.dragging) {
+          el.css({
+            left: e.pageX - editor.canvas.events.dragging[0] + 'px',
+            top: e.pageY - editor.canvas.events.dragging[1] + 'px'
+          });
         }
         e.preventDefault();
       },
