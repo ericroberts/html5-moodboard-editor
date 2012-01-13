@@ -29,6 +29,9 @@ $(function() {
     value: 2
   });
   
+  $("#items").height(editor.window.height-50-parseInt($("#items").css('top'),10));
+  $(".tab_container","#items").height($("#items").height()-$("#items > h2").outerHeight()-$(".tabs navul").outerHeight()-57);
+  
   $.get("/boards/1.txt", function(data) {
     editor.currentboard = data;
     for(var i = 0; i < data.olioboard.object.length; i++) {
@@ -395,6 +398,7 @@ var editor = {
       editor.crop.theSelection = editor.crop.selection(item.mask.x,item.mask.y,item.mask.width,item.mask.height);
       
       editor.removeTouchListeners($(".active","#canvas").data('ref'));
+      editor.removeClickListeners($(".active","#canvas").data('ref'));
       editor.crop.drawScene(object);
     },
     save: function(object,sel) {
@@ -833,6 +837,7 @@ var editor = {
         
         if(!editor.canvas.events.dragging){
           editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
+          console.log(editor.canvas.events.dragging);
         }
       },
       move: function(e) {
@@ -847,30 +852,10 @@ var editor = {
       },
       end: function(e) {
         editor.canvas.events.drag = null;
+        editor.canvas.events.dragging = false;
         document.removeEventListener('mousemove',editor.canvas.events.move);
         document.removeEventListener('mouseup',editor.canvas.events.up);
       }
-    }
-  },
-  test: {
-    mousedown: function(e) {
-      $(this).addClass('doc_active_class');
-      document.addEventListener('mousemove',editor.test.mousemove,false);
-      document.addEventListener('mouseup',editor.test.mouseup,false);
-      e.preventDefault();
-    },
-    mousemove: function(e) {
-      $('.doc_active_class').css({
-        top: e.pageY,
-        left: e.pageX
-      });
-      e.preventDefault();
-    },
-    mouseup: function(e) {
-      $('.doc_active_class').removeClass('doc_active_class');
-      document.removeEventListener('mouseover',editor.test.mouseover);
-      document.removeEventListener('mouseup',editor.test.mouseup);
-      e.preventDefault();
     }
   },
   getVendorURL: function(url) {
@@ -976,93 +961,94 @@ var editor = {
   },
   panel: {
     addItem: function(object) {
-      var src = editor.imgUrl(object.id);
-      var li = $("<li><img src="+src+" alt="+object.id+" /></li>");
-      $('img',li).data('object',object);
+      var src = editor.imgUrl(object.id),
+          li = document.createElement('li'),
+          img = new Image();
+          
+      img.src = src;
+      img.setAttribute('alt',object.id);
+          
+      $(li).append(img);
       $("#testitems").append(li);
       
-      $('img',li).bind('touchstart',editor.panel.touch.start)
-        .bind('touchmove',editor.panel.touch.move)
-        .bind('touchend',editor.panel.touch.end)
-        .bind('mousedown',editor.panel.touch.start)
-        .bind('mousemove',editor.panel.touch.move)
-        .bind('mouseup',editor.panel.touch.end);
+      img.addEventListener('touchstart',editor.panel.events.start);
+      img.addEventListener('touchmove',editor.panel.events.move);
+      img.addEventListener('touchend',editor.panel.events.end);
+      img.addEventListener('mousedown',editor.panel.events.start);
     },
     events: {
-      dragging: false
-    },
-    touch: {
+      drag: null,
+      dragging: false,
       start: function(e) {
-        var event = e.originalEvent;
-        var t = event.changedTouches ? event.changedTouches[0] : event,
+        
+        var i = $(this), 
+            t = e.changedTouches ? e.changedTouches[0] : e,
             o = $(this).offset();
-        
-        $(this).closest("li").addClass("empty");
-        
-        $("#canvas_scale").append($(this));
-        
-        $(this).addClass('moving').css({ 
-          top: o.top-10,
-          left: o.left-10
-        });
-        
+            
+        if(!e.changedTouches) {
+          document.addEventListener('mousemove',editor.panel.events.move);
+          document.addEventListener('mouseup',editor.panel.events.end);
+        }
+            
+        editor.panel.events.drag = i;
         if(editor.panel.events.dragging == false) {
           editor.panel.events.dragging = [t.pageX - o.left + 10, t.pageY - o.top + 10];
         }
         
+        i.addClass('moving').css({
+          top: o.top-10,
+          left: o.left-10
+        }).closest('li').addClass('empty');
+        $("#canvas_scale").append(i);
+        
         e.preventDefault();
+        
       },
       move: function(e) {
-        var event = e.originalEvent;
-        var t = event.changedTouches ? event.changedTouches[0] : event;
-
-        if($(this).hasClass("moving")) {
-          $(this).css({
-            top: t.pageY - editor.panel.events.dragging[1],
-            left: t.pageX - editor.panel.events.dragging[0]
+        var t = e.changedTouches ? e.changedTouches[0] : e,
+            el = editor.panel.events.drag;
+        
+        if(el.hasClass('moving') && editor.panel.events.dragging) {
+          el.css({
+            left: t.pageX - editor.panel.events.dragging[0],
+            top: t.pageY - editor.panel.events.dragging[1]
           });
         }
-
         e.preventDefault();
       },
       end: function(e) {
-        var event = e.originalEvent;
+        
         var t = event.changedTouches ? event.changedTouches[0] : event,
+            el = editor.panel.events.drag,
             io = {
-              left: parseInt(this.style.left,10)+$(this).width(),
-              top: parseInt(this.style.top,10)+$(this).width()
+              left: parseInt(el.css('left'),10)+el.width(),
+              top: parseInt(el.css('top'),10)+el.width()
             },
-            po = $("#items").offset();
-            
-        var base = {
+            po = $("#items").offset(),
+            base = {
               x: editor.window.width/2,
               y: editor.window.height/2
             },
-            obj = new editor.setup.item($(this).attr("alt"));
+            obj = new editor.setup.item(el.attr("alt")),
+            d = {
+              w: el.width(),
+              h: el.height(),
+              t: parseInt(el.css('top')),
+              l: parseInt(el.css('left'))
+            };
             
-        obj.x = (parseInt(this.style.left,10) - base.x + $(this).width()/2)/editor.window.zoom;
-        obj.y = (parseInt(this.style.top,10) - base.y + $(this).height()/2)/editor.window.zoom;
-
-        editor.panel.events.dragging = false;
-        
-        var d = {
-          w: $(this).width(),
-          h: $(this).height(),
-          t: parseInt(this.style.top),
-          l: parseInt(this.style.left)
-        }
-        
-        var img = $(this);
+        obj.x = (parseInt(el.css('left'),10) - base.x + $(el).width()/2)/editor.window.zoom;
+        obj.y = (parseInt(el.css('top'),10) - base.y + $(el).height()/2)/editor.window.zoom;
         
         $(".active","#canvas").removeClass("active");
-        img.animate({
+        el.animate({
           width: 50,
           height: 50,
           top: d.t + (d.h-50)/2,
           left: d.l + (d.w-50)/2,
           opacity: 0
         },80, 'easeOutQuad', function() {
-          img.animate({
+          el.animate({
             width: 400*editor.window.zoom,
             height: 400*editor.window.zoom,
             top: d.t + (d.h-400*editor.window.zoom)/2,
@@ -1071,7 +1057,7 @@ var editor = {
           },200, 'easeOutQuad', function() {
             editor.addObject(obj,editor.id.count,true);
             setTimeout(function() {
-              img.removeClass("moving").appendTo(".empty").css({
+              el.removeClass("moving").appendTo(".empty").css({
                 width: 80,
                 height: 80
               });
@@ -1079,6 +1065,11 @@ var editor = {
             },200);
           });
         });
+        
+        editor.panel.events.drag = null;
+        editor.panel.events.dragging = false;
+        document.removeEventListener('mousemove',editor.panel.events.move);
+        document.removeEventListener('mouseup',editor.panel.events.end);
       }
     }
   },
