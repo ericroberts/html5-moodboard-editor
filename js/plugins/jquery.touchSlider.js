@@ -91,6 +91,7 @@
       plugin.settings.onStart();
       var touch = e.changedTouches[0];
       dragging = touch.pageX - parseInt($(this).css("left"),10);
+      e.preventDefault();
     }
     
     var drag = function(e) {

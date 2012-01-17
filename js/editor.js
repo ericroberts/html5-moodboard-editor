@@ -1,26 +1,19 @@
 $(function() {
   
   document.addEventListener('touchend', editor.touchend, false);
+  document.addEventListener('click', function(e) {
+    if(e.target.tagName.toLowerCase() != "canvas" && $(e.target).parents(".toolbar").length < 1 && $(e.target).parents('#items').length < 1 && $(e.target).parents('#item_details').length < 1) {
+      editor.closeToolbar();
+      $(".active","#canvas").removeClass('active');
+      $("#item_details").animate({
+        bottom: -124
+      },300);
+    }
+  });
   
   var scale_one = Math.abs((editor.window.height-100)/editor.defaults.height);
   var scale_two = Math.abs((editor.window.width-100)/editor.defaults.width);
   editor.window.zoom = Math.min(scale_one,scale_two,1);
-  
-  /*
-  var canvas = $("<div></div>");
-  canvas.css({
-    width: editor.defaults.width*editor.window.zoom,
-    height: editor.defaults.height*editor.window.zoom,
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    zIndex: 0,
-    marginLeft: -(editor.defaults.width*editor.window.zoom)/2,
-    marginTop: -(editor.defaults.height*editor.window.zoom)/2,
-    background: 'rgba(0,0,0,0.1)'
-  });
-  $("body").prepend(canvas);
-  */
   
   $("#bg_tolerance").touchSlider({
     value: 5
@@ -299,26 +292,24 @@ $(window).resize(function() {
   editor.window.height = $(window).height();
 });
 
-/*
 window.onorientationchange = function() {
   var o = window.orientation;
   
   if (o != 90 && o != -90) {
-    document.getElementsByTagName("body")[0].style.webkitTransform = "rotate(-90deg)";
+    setTimeout(function() {
+      var message = $("<div class='rotate_message'><span>This site works best in landscape mode. Please switch back in order to use it.</span></div>");
+      $("body").prepend(message.hide().fadeIn(300));
+    },500);
+  } else if($('.rotate_message').length >= 1) {
+    $(".rotate_message").fadeOut(300, function() {
+      $(".rotate_message").remove();
+    });
   }
 }
-*/
-
 var editor = {
   defaults: {
     width: 1960,
     height: 1440
-  },
-  events: {
-    dragging: false,
-    sizing: false,
-    rotating: 0,
-    fingers: 0
   },
   items: {
     order: [],
@@ -809,8 +800,9 @@ var editor = {
       editor.addClickListeners(refid);
       
       if(active == true) {
-        $(canvas).click();
+        editor.activateObject($(canvas));
       }
+      
     }
     
     img.src = src;
@@ -822,18 +814,12 @@ var editor = {
     canvas.addEventListener('touchstart', editor.canvas.events.start, false);
     canvas.addEventListener('touchmove', editor.canvas.events.move, false);
     canvas.addEventListener('touchend', editor.canvas.events.end, false);
-    canvas.addEventListener('gesturestart', editor.gesture, false);
-    canvas.addEventListener('gesturechange', editor.gesturechange, false);
-    canvas.addEventListener('gestureend', editor.gestureend, false);
   },
   removeTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
     canvas.removeEventListener('touchstart', editor.canvas.events.start, false);
     canvas.removeEventListener('touchmove', editor.canvas.events.move, false);
     canvas.removeEventListener('touchend', editor.canvas.events.end, false);
-    canvas.removeEventListener('gesturestart', editor.gesture, false);
-    canvas.removeEventListener('gesturechange', editor.gesturechange, false);
-    canvas.removeEventListener('gestureend', editor.gestureend, false);
   },
   addClickListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
@@ -847,38 +833,132 @@ var editor = {
     events: {
       drag: null,
       dragging: false,
+      sizing: false,
+      rotate: false,
+      zoom: false,
+      fingers: 0,
       start: function(event) {
         var canvas = $(this);
-        editor.canvas.events.drag = canvas;
-        editor.activateObject(canvas);
         
-        var e = event.changedTouches ? event.changedTouches[0] : event;
-        
-        if(!event.changedTouches) {
-          document.addEventListener('mousemove',editor.canvas.events.move);
-          document.addEventListener('mouseup',editor.canvas.events.end);
+        if(editor.canvas.events.fingers == 0) {
+          editor.canvas.events.drag = canvas;
+          editor.activateObject(canvas);
+          
+          var e = event.changedTouches ? event.changedTouches[0] : event;
+
+          if(!event.changedTouches) {
+            document.addEventListener('mousemove',editor.canvas.events.move);
+            document.addEventListener('mouseup',editor.canvas.events.end);
+          } else {
+            if(event.touches.length == 2) {
+              editor.canvas.events.sizing = [parseInt($(this).width()), parseInt($(this).height())];
+              editor.canvas.events.rotate = editor.gestures.rotate(event.touches[0],event.touches[1]);
+              editor.canvas.events.zoom = editor.gestures.zoom(event.touches[0],event.touches[1]);
+            }
+          }
+          
+          if(!editor.canvas.events.dragging){
+            editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
+          }
         }
         
-        if(!editor.canvas.events.dragging){
-          editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
-        }
+        event.preventDefault();
       },
       move: function(e) {
         var el = editor.canvas.events.drag;
-        if(el.hasClass("active") && editor.canvas.events.dragging) {
-          el.css({
-            left: e.pageX - editor.canvas.events.dragging[0] + 'px',
-            top: e.pageY - editor.canvas.events.dragging[1] + 'px'
-          });
+            
+        if(!e.changedTouches) {
+          t = e;
+          e.touches = ['touch'];
+        } else {
+          t = e.changedTouches[0];
         }
+         
+        if(el.hasClass('active')) {
+          var data = $(".active","#canvas").data('object');
+          
+          if(editor.canvas.events.dragging && e.touches.length == 1) {
+            el.css({
+              left: t.pageX - editor.canvas.events.dragging[0],
+              top: t.pageY - editor.canvas.events.dragging[1]
+            });
+            
+            var base = {
+              x: editor.window.width/2,
+              y: editor.window.height/2
+            }
+            
+            data.x = Math.round((parseInt(el.css('left'),10) - base.x + $(el).width()/2)/editor.window.zoom);
+            data.y = Math.round((parseInt(el.css('top'),10) - base.y + $(el).height()/2)/editor.window.zoom);
+            
+          } else if(e.touches.length == 2) {
+
+            if(data.media.scaleLock == 0) {
+              var zoom = editor.gestures.zoom(e.touches[0],e.touches[1])/editor.canvas.events.zoom,
+                  width1 = parseFloat(el.width()),
+                  height1 = parseFloat(el.height()),
+                  width = editor.canvas.events.sizing[0]*zoom,
+                  height = editor.canvas.events.sizing[1]*zoom;
+
+              el.width(width).height(height).css({
+                left: parseFloat(this.style.left) - (width-width1)/2,
+                top: parseFloat(this.style.top) - (height-height1)/2
+              });
+
+              var scale = el.width()/(400*editor.window.zoom);
+              $("#scale").val(Math.round(scale*100)+"%");
+              data.media.scale = scale;
+            }
+
+            if(data.media.angleLock == 0) {
+              var rotate = editor.gestures.rotate(e.touches[0],e.touches[1]) - editor.canvas.events.rotate;
+
+              if(rotate < 0) { rotate = 360 + rotate; }
+              if(rotate > 360) { rotate = rotate - 360; }
+
+              var locks = [0,45,90,135,180,225,270,315,360];
+
+              for(i = 0; i < locks.length; i++) {
+                if(rotate >= (locks[i]-5) && rotate <= (locks[i]+5)) {
+                  rotate = locks[i];
+                }
+              }
+
+              el.css("-webkit-transform","rotate("+rotate+"deg)");
+              $("#rotation").val(Math.round(rotate)+"°");
+              data.media.rotation = rotate;
+            }
+          }
+        }
+        
         e.preventDefault();
       },
       end: function(e) {
         editor.canvas.events.drag = null;
         editor.canvas.events.dragging = false;
+        editor.canvas.events.rotation = false;
+        editor.canvas.events.zoom = false;
+        editor.canvas.events.sizing = false;
+        
+        var data = $(".active","#canvas").data('object');
         document.removeEventListener('mousemove',editor.canvas.events.move);
-        document.removeEventListener('mouseup',editor.canvas.events.up);
+        document.removeEventListener('mouseup',editor.canvas.events.end);
+        editor.canvas.events.fingers = 0;
       }
+    }
+  },
+  gestures: {
+    zoom: function(t0,t1) {
+      var x = t0.pageX-t1.pageX,
+          y = t0.pageY-t1.pageY;
+          
+      return Math.sqrt(x*x + y*y);
+    },
+    rotate: function(t0,t1) {
+      var x = t0.pageX - t1.pageX,
+          y = t0.pageY - t1.pageY;
+      
+      return Math.atan2(y,x)*180/Math.PI;
     }
   },
   getVendorURL: function(url) {
@@ -935,65 +1015,6 @@ var editor = {
   },
   closeToolbar: function() {
     $("#toolbar").fadeOut(300);
-  },
-  gesture: function(event) {
-    if($(this).hasClass("active")) {
-      editor.events.sizing = [parseInt($(this).width()), parseInt($(this).height())];
-      editor.events.rotating = $(this).data('object').media.rotation;
-    }
-  },
-  gesturechange: function(event) {
-    if($(this).hasClass("active")) {
-      var data = $(".active","#canvas").data("object");
-      if(editor.events.sizing){
-        
-        // Sizing
-        if(data.media.scaleLock == 0) {
-              
-          $(this).width(Math.min(editor.events.sizing[0] * event.scale, 600) + "px")
-            .height(Math.min(editor.events.sizing[1] * event.scale, 600) + "px");
-  
-          var scale = $(this).width()/(400*editor.window.zoom);
-          $("#scale").val(Math.round(scale*100)+"%");
-          data.media.scale = scale;
-
-        }
-        
-        // Rotating
-        if(data.media.angleLock == 0) {
-          var rotate = (editor.events.rotating + event.rotation);
-          if(rotate < 0) { rotate = 360 + rotate; }
-          if(rotate > 360) { rotate = rotate - 360; }
-          
-          var locks = [0,45,90,135,180,225,270,315,360];
-          
-          for(i = 0; i < locks.length; i++) {
-            if(rotate >= (locks[i]-5) && rotate <= (locks[i]+5)) {
-              rotate = locks[i];
-            }
-          }
-          
-          var rotatexy = $(this).data("rotate");
-          if(!rotatexy) {
-            rotatexy = { x: 0, y: 0 }
-          }
-          
-          this.style.webkitTransform = "rotate(" + (rotate) + "deg) rotateX("+rotatexy.x+") rotateY("+rotatexy.y+")";
-          $("#rotation").val(Math.round(rotate)+"°");
-          data.media.rotation = rotate;
-        }
-      }
-    }
-  },
-  gestureend: function(event) {
-    if($(this).hasClass("active")) {
-      editor.events.sizing = false;
-      editor.events.rotating = (editor.events.rotating + event.rotation);
-    }
-  },
-  zoom: function(e) {
-    $(this).css("-webkit-transform","scale("+event.scale+")");
-    e.preventDefault();
   },
   panel: {
     addItem: function(object) {
@@ -1075,8 +1096,6 @@ var editor = {
             
         obj.x = (parseInt(el.css('left'),10) - base.x + $(el).width()/2)/editor.window.zoom;
         obj.y = (parseInt(el.css('top'),10) - base.y + $(el).height()/2)/editor.window.zoom;
-        
-        console.log(obj);
         
         $(".active","#canvas").removeClass("active");
         el.animate({

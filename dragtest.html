@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>HTML5 Moodboard Editor</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="shortcut icon" href="/images/favicon.png"> 
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+<body>
+  <div id="canvas">
+    <div id="canvas_scale">
+      <div id="scale"></div>
+      <canvas style="position: absolute; top: 50px; left: 50px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 100px; left: 100px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 150px; left: 200px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 300px; left: 150px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 50px; left: 400px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 180px; left: 150px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 100px; left: 250px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 150px; left: 350px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;"></canvas>
+      <canvas style="position: absolute; top: 350px; left: 450px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" id='img'></canvas>
+      <!--
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 50px; left: 50px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 100px; left: 100px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 150px; left: 200px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 300px; left: 150px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 50px; left: 400px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 180px; left: 150px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 100px; left: 250px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 150px; left: 350px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #ccc;" />
+      <img src="/images/items/547_400x400.jpg" style="position: absolute; top: 350px; left: 450px; z-index: 0; width: 200px; height: 200px; background: #fff; border: 1px solid #000;" id="img" />
+      -->
+    </div>
+  </div>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="/js/libs/jquery-1.7.1.min.js"><\/script>')</script>
+  <script src="/js/plugins/jquery.easing.1.3.min.js"></script>
+  <script src="/js/plugins/jquery.touchSlider.js"></script>
+  <script>
+      
+  $(function() {
+    
+    var dragging = false,
+        sizing = false,
+        rotating = 0,
+        rotation = false,
+        initialDist = false,
+        count = 1;
+
+    document.getElementById('img').addEventListener('touchstart', function(e) {
+      sizing = [parseInt($(this).width()), parseInt($(this).height())];
+      
+      if(e.touches.length == 2) {
+        initialDist = getScalingDistance(e.touches[0],e.touches[1]);
+        rotation = getRotationAngle(e.touches[0],e.touches[1]);
+      } else {
+        var t = e.touches[0];
+        if(!dragging) {
+          dragging = [t.pageX - parseInt(this.style.left), t.pageY - parseInt(this.style.top)];
+        }
+      }
+      
+      e.preventDefault();
+    });
+    
+    document.getElementById('img').addEventListener('touchmove', function(e) {
+      if(e.touches.length == 2) {
+        
+        var newDist = getScalingDistance(e.touches[0],e.touches[1]),
+            scale = newDist/initialDist;
+        
+        $(this).width(sizing[0]*scale).height(sizing[1]*scale);
+        
+        
+        var rotate = getRotationAngle(e.touches[0],e.touches[1]) - rotation;
+        this.style.webkitTransform = "rotate("+rotate+"deg)";
+        
+      } else {
+        
+        var t = e.changedTouches[0];
+        if(dragging) {
+          $(this).css({
+            left: t.pageX - dragging[0] + 'px',
+            top: t.pageY - dragging[1] + 'px'
+          });
+        }
+        
+      }
+      e.preventDefault();
+    });
+    
+    function getScalingDistance(t1,t2) {
+      a = t1.pageX-t2.pageX;
+      b = t1.pageY-t2.pageY;
+      return Math.sqrt(a*a + b*b);
+    }
+    
+    function getRotationAngle(t1,t2) {
+      var x = t1.pageX - t2.pageX,
+          y = t1.pageY - t2.pageY;
+      
+      return Math.atan2(y,x)*180/Math.PI;
+    }
+    
+  });
+  </script>
+  <!--[if lt IE 7 ]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->  
+</body>
+</html>
