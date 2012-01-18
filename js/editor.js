@@ -9,6 +9,7 @@ $(function() {
         bottom: -124
       },300);
     }
+    //console.log(e);
   });
   
   var scale_one = Math.abs((editor.window.height-100)/editor.defaults.height);
@@ -288,7 +289,7 @@ $(function() {
 });
 
 $(window).resize(function() {
-  editor.window.width = $(window).width();
+  editor.window.width = $(window).width()-$("#items").width();
   editor.window.height = $(window).height();
 });
 
@@ -323,7 +324,7 @@ var editor = {
     }
   },
   window: {
-    width: $(window).width(),
+    width: $(window).width()-$("#items").width(),
     height: $(window).height()
   },
   resetToolbar: function() {
@@ -737,7 +738,6 @@ var editor = {
     }
     ctx.putImageData(imageData,0,0);
     
-    
   },
   getAlpha: function(diff,step) {
     return diff*step;
@@ -836,14 +836,47 @@ var editor = {
       sizing: false,
       rotate: false,
       zoom: false,
-      fingers: 0,
       start: function(event) {
-        var canvas = $(this);
+        var t = event.changedTouches ? event.changedTouches[0] : event,
+            canvas = $(this),
+            c = {
+              x: (t.pageX - parseInt(this.style.left,10))*(400/canvas.width()),
+              y: (t.pageY - parseInt(this.style.top,10))*(400/canvas.height())
+            },
+            data = editor.getCanvas(canvas.data('ref')),
+            pixelData = data.ctx.getImageData(c.x,c.y,1,1),
+            pixel = pixelData.data;
+            
+        data.ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        //data.ctx.fillRect(c.x-5,c.y-5,10,10);
         
-        if(editor.canvas.events.fingers == 0) {
+        console.log(data.object.media.rotation);
+        
+        var s = Math.sin(data.object.media.rotation);
+        var co = Math.cos(data.object.media.rotation);
+        
+        var p = c;
+        var ce = {
+          x: 200,
+          y: 200
+        }
+        
+        p.x -= ce.x;
+        p.y -= ce.y;
+        
+        var xnew = p.x * co + p.y * s;
+        var ynew = -p.x * s + p.y * co;
+        
+        p.x = xnew + ce.x;
+        p.y = ynew + ce.y;      
+        
+        data.ctx.fillRect(p.x-5,p.y-5,10,10);
+        
+        if(pixel[3] != 0) {
+          //console.log('not a transparent pixel');
           editor.canvas.events.drag = canvas;
           editor.activateObject(canvas);
-          
+
           var e = event.changedTouches ? event.changedTouches[0] : event;
 
           if(!event.changedTouches) {
@@ -856,10 +889,12 @@ var editor = {
               editor.canvas.events.zoom = editor.gestures.zoom(event.touches[0],event.touches[1]);
             }
           }
-          
+
           if(!editor.canvas.events.dragging){
             editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
           }
+        } else {
+          //console.log("don't activate this canvas, this pixel is transparent");
         }
         
         event.preventDefault();
@@ -940,10 +975,8 @@ var editor = {
         editor.canvas.events.zoom = false;
         editor.canvas.events.sizing = false;
         
-        var data = $(".active","#canvas").data('object');
         document.removeEventListener('mousemove',editor.canvas.events.move);
         document.removeEventListener('mouseup',editor.canvas.events.end);
-        editor.canvas.events.fingers = 0;
       }
     }
   },
