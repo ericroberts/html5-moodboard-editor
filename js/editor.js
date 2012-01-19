@@ -844,34 +844,11 @@ var editor = {
               y: (t.pageY - parseInt(this.style.top,10))*(400/canvas.height())
             },
             data = editor.getCanvas(canvas.data('ref')),
-            pixelData = data.ctx.getImageData(c.x,c.y,1,1),
+            p = editor.canvas.rotatePoint(c,data.object.media.rotation),
+            pixelData = data.ctx.getImageData(p.x,p.y,1,1),
             pixel = pixelData.data;
-            
-        data.ctx.fillStyle = 'rgba(0,0,0,0.75)';
-        //data.ctx.fillRect(c.x-5,c.y-5,10,10);
         
-        console.log(data.object.media.rotation);
-        
-        var s = Math.sin(data.object.media.rotation);
-        var co = Math.cos(data.object.media.rotation);
-        
-        var p = c;
-        var ce = {
-          x: 200,
-          y: 200
-        }
-        
-        p.x -= ce.x;
-        p.y -= ce.y;
-        
-        var xnew = p.x * co + p.y * s;
-        var ynew = -p.x * s + p.y * co;
-        
-        p.x = xnew + ce.x;
-        p.y = ynew + ce.y;      
-        
-        data.ctx.fillRect(p.x-5,p.y-5,10,10);
-        
+        console.log(pixel[3]);
         if(pixel[3] != 0) {
           //console.log('not a transparent pixel');
           editor.canvas.events.drag = canvas;
@@ -978,6 +955,32 @@ var editor = {
         document.removeEventListener('mousemove',editor.canvas.events.move);
         document.removeEventListener('mouseup',editor.canvas.events.end);
       }
+    },
+    rotatePoint: function(p,angle) {
+      
+      angle = -angle; 
+      angle = angle*Math.PI / 180.0;
+      
+      var c = {
+        x: 200,
+        y: 200
+      }
+      
+      var d = {
+        x: p.x-c.x,
+        y: p.y-c.y
+      }
+      
+      var a = Math.atan2(d.y,d.x);
+      var dist = Math.sqrt(d.x*d.x+d.y*d.y);
+      var a2 = a+angle;
+      
+      var d2 = {
+        x: Math.cos(a2)*dist,
+        y: Math.sin(a2)*dist
+      }
+      
+      return { x: d2.x + c.x, y: d2.y + c.y }
     }
   },
   gestures: {
