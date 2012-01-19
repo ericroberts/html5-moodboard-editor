@@ -314,7 +314,8 @@ var editor = {
   },
   items: {
     order: [],
-    indexes: []
+    indexes: [],
+    ids: []
   },
   id: {
     count: 0,
@@ -773,14 +774,24 @@ var editor = {
         $(canvas).addClass('removed_bg');
       }
       
-      var img_src = canvas.toDataURL();
-      //img_src = editor.imgUrl(object.id);
-      $(canvas).css({
+      var prop = {
         width: 400*object.media.scale*editor.window.zoom,
         height: 400*object.media.scale*editor.window.zoom,
         top: base.y + object.y*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
         left: base.x + object.x*editor.window.zoom - (400*object.media.scale*editor.window.zoom)/2,
-        webkitTransform: "rotate("+object.media.rotation+"deg)"
+        rotation: object.media.rotation
+      }
+      
+      editor.items.ids.push(refid);
+      
+      var img_src = canvas.toDataURL();
+      //img_src = editor.imgUrl(object.id);
+      $(canvas).css({
+        width: prop.width,
+        height: prop.height,
+        top: prop.top,
+        left: prop.left,
+        webkitTransform: "rotate("+prop.rotation+"deg)"
       }).data('object',object)
         .css('z-index',i)
         .data('z',i)
@@ -812,8 +823,8 @@ var editor = {
   addTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
     canvas.addEventListener('touchstart', editor.canvas.events.start, false);
-    canvas.addEventListener('touchmove', editor.canvas.events.move, false);
-    canvas.addEventListener('touchend', editor.canvas.events.end, false);
+    //canvas.addEventListener('touchmove', editor.canvas.events.move, false);
+    //canvas.addEventListener('touchend', editor.canvas.events.end, false);
   },
   removeTouchListeners: function(id) {
     var canvas = document.getElementById('item_'+id);
@@ -830,6 +841,49 @@ var editor = {
     canvas.removeEventListener('mousedown', editor.canvas.events.start, false);
   },
   canvas: {
+    checkObjects: function(x,y,event) {
+      var index = [];
+      
+      $("#canvas_scale canvas").each(function() {
+        var canvas = editor.getCanvas($(this).data('ref')),
+            c = {
+              x: (x - parseInt($(this).css('left'),10))*(400/$(this).width()), 
+              y: (y - parseInt($(this).css('top'),10))*(400/$(this).height())
+            },
+            p = editor.canvas.rotatePoint(c,canvas.object.media.rotation),
+            pixelData = canvas.ctx.getImageData(p.x,p.y,1,1),
+            pixel = pixelData.data,
+            z = $(this).data('z');
+            
+        if(pixel[3] != 0) {
+          if(z > Math.max(index)) {
+            editor.activateObject($(this));
+            index.push(z);
+            
+            editor.canvas.events.drag = $(this);
+            
+            var e = event.changedTouches ? event.changedTouches[0] : event;
+
+            if(!event.changedTouches) {
+              document.addEventListener('mousemove',editor.canvas.events.move);
+              document.addEventListener('mouseup',editor.canvas.events.end);
+            } else {
+              document.addEventListener('touchmove',editor.canvas.events.move);
+              document.addEventListener('touchend',editor.canvas.events.end);
+              if(event.touches.length == 2) {
+                editor.canvas.events.sizing = [parseInt($(this).width()), parseInt($(this).height())];
+                editor.canvas.events.rotate = editor.gestures.rotate(event.touches[0],event.touches[1]);
+                editor.canvas.events.zoom = editor.gestures.zoom(event.touches[0],event.touches[1]);
+              }
+            }
+
+            if(!editor.canvas.events.dragging){
+              editor.canvas.events.dragging = [x - parseInt($(this).css('left'),10), y - parseInt($(this).css('top'),10)];
+            }
+          }
+        }
+      });
+    },
     events: {
       drag: null,
       dragging: false,
@@ -848,9 +902,7 @@ var editor = {
             pixelData = data.ctx.getImageData(p.x,p.y,1,1),
             pixel = pixelData.data;
         
-        console.log(pixel[3]);
         if(pixel[3] != 0) {
-          //console.log('not a transparent pixel');
           editor.canvas.events.drag = canvas;
           editor.activateObject(canvas);
 
@@ -860,6 +912,8 @@ var editor = {
             document.addEventListener('mousemove',editor.canvas.events.move);
             document.addEventListener('mouseup',editor.canvas.events.end);
           } else {
+            document.addEventListener('touchmove',editor.canvas.events.move);
+            document.addEventListener('touchend',editor.canvas.events.end);
             if(event.touches.length == 2) {
               editor.canvas.events.sizing = [parseInt($(this).width()), parseInt($(this).height())];
               editor.canvas.events.rotate = editor.gestures.rotate(event.touches[0],event.touches[1]);
@@ -871,7 +925,7 @@ var editor = {
             editor.canvas.events.dragging = [e.pageX - parseInt(this.style.left), e.pageY - parseInt(this.style.top)];
           }
         } else {
-          //console.log("don't activate this canvas, this pixel is transparent");
+          editor.canvas.checkObjects(t.pageX,t.pageY,event)
         }
         
         event.preventDefault();
@@ -913,8 +967,8 @@ var editor = {
                   height = editor.canvas.events.sizing[1]*zoom;
 
               el.width(width).height(height).css({
-                left: parseFloat(this.style.left) - (width-width1)/2,
-                top: parseFloat(this.style.top) - (height-height1)/2
+                left: parseFloat(el.css('left')) - (width-width1)/2,
+                top: parseFloat(el.css('top')) - (height-height1)/2
               });
 
               var scale = el.width()/(400*editor.window.zoom);
@@ -954,6 +1008,8 @@ var editor = {
         
         document.removeEventListener('mousemove',editor.canvas.events.move);
         document.removeEventListener('mouseup',editor.canvas.events.end);
+        document.removeEventListener('touchmove',editor.canvas.events.move);
+        document.removeEventListener('touchend',editor.canvas.events.end);
       }
     },
     rotatePoint: function(p,angle) {
